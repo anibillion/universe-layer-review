@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canon Review — The Last Moon</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d10; --surface: #16161c; --surface-2: #1e1e26;
+    --border: #2a2a35; --text: #ece9e4; --text-dim: #a09a90;
+    --text-muted: #6b665e; --gold: #d4a95a; --gold-dim: #8a6f3a;
+    --gold-glow: rgba(212, 169, 90, 0.12);
+    --green: #6bbf7a; --red: #c96565; --amber: #d4a95a;
+  }
+  html, body {
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 24px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(13,13,16,0.92); backdrop-filter: blur(10px);
+    flex-wrap: wrap; gap: 12px;
+  }
+  .topbar-title { font-size: 14px; font-weight: 600; }
+  .topbar-sub { font-size: 11px; color: var(--text-muted);
+    letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+  .timer {
+    font-family: ui-monospace, monospace; font-size: 14px;
+    color: var(--gold); padding: 6px 14px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-2);
+  }
+  .progress {
+    font-size: 12px; color: var(--text-dim);
+    font-family: ui-monospace, monospace;
+  }
+  .container {
+    max-width: 780px; margin: 0 auto; padding: 32px 24px 120px;
+  }
+  .intro {
+    padding: 20px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px;
+    margin-bottom: 28px; font-size: 14px; color: var(--text-dim);
+  }
+  .intro strong { color: var(--text); }
+  .intro p + p { margin-top: 10px; }
+
+  .entry {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 14px;
+    transition: border-color 0.2s, opacity 0.2s;
+  }
+  .entry.approved { border-color: rgba(107, 191, 122, 0.35); }
+  .entry.rejected { border-color: rgba(201, 101, 101, 0.35); opacity: 0.55; }
+  .entry.edited { border-color: rgba(212, 169, 90, 0.5); }
+
+  .entry-head {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 12px; margin-bottom: 12px;
+  }
+  .entry-name { font-size: 17px; font-weight: 600; }
+  .entry-type {
+    font-size: 10px; color: var(--gold); letter-spacing: 0.12em;
+    text-transform: uppercase; margin-top: 3px;
+  }
+  .entry-source {
+    font-size: 11px; color: var(--text-muted);
+    font-family: ui-monospace, monospace; white-space: nowrap;
+  }
+  .entry-desc {
+    font-size: 14px; color: var(--text-dim); line-height: 1.6;
+    padding: 12px 14px; background: var(--surface-2);
+    border-radius: 8px; margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+  .entry-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .btn {
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    padding: 9px 18px; border-radius: 8px; cursor: pointer;
+    transition: all 0.15s; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text);
+  }
+  .btn:hover { border-color: var(--text-dim); }
+  .btn.approve:hover { border-color: var(--green); color: var(--green); }
+  .btn.reject:hover { border-color: var(--red); color: var(--red); }
+  .btn.edit:hover { border-color: var(--gold); color: var(--gold); }
+  .btn.approve.active { background: rgba(107,191,122,0.15);
+    border-color: var(--green); color: var(--green); }
+  .btn.reject.active { background: rgba(201,101,101,0.15);
+    border-color: var(--red); color: var(--red); }
+  .btn.edit.active { background: var(--gold-glow);
+    border-color: var(--gold); color: var(--gold); }
+
+  .edit-area { display: none; margin-top: 14px; }
+  .edit-area.visible { display: block; }
+  .edit-area textarea {
+    width: 100%; min-height: 80px; padding: 12px;
+    background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 14px; line-height: 1.55;
+    resize: vertical; outline: none;
+  }
+  .edit-area textarea:focus { border-color: var(--gold); }
+  .edit-save {
+    margin-top: 10px; background: var(--gold-glow);
+    border-color: var(--gold-dim); color: var(--gold);
+  }
+  .edit-save:hover { background: rgba(212,169,90,0.22); }
+
+  .finish-panel {
+    margin-top: 40px; padding: 32px;
+    background: var(--surface); border: 1px solid var(--gold-dim);
+    border-radius: 12px; text-align: center;
+    display: none;
+  }
+  .finish-panel.visible { display: block; }
+  .finish-panel h2 {
+    font-family: Georgia, serif; font-weight: 400; font-size: 26px;
+    margin-bottom: 12px;
+  }
+  .finish-panel p { color: var(--text-dim); font-size: 14px;
+    margin-bottom: 20px; }
+  .finish-panel .stat {
+    font-family: ui-monospace, monospace; color: var(--gold);
+    font-size: 24px; display: block; margin-bottom: 24px;
+  }
+  .finish-btn {
+    background: var(--gold-glow); border: 1px solid var(--gold);
+    color: var(--gold); font-family: inherit; font-size: 14px;
+    font-weight: 500; padding: 14px 32px; border-radius: 10px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .finish-btn:hover { background: rgba(212,169,90,0.22); }
+
+  /* Reader preview */
+  #reader-preview { display: none; }
+  #reader-preview.visible { display: block; }
+  .reader-header {
+    padding: 24px; border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .reader-header h1 {
+    font-family: Georgia, serif; font-weight: 400; font-size: 30px;
+    margin-bottom: 8px;
+  }
+  .reader-header p { color: var(--text-dim); font-size: 14px; }
+  .reader-body {
+    font-family: Georgia, serif; font-size: 18px; line-height: 1.8;
+    color: #ded9d1;
+  }
+  .reader-body p { margin-bottom: 24px; }
+  .entity-link {
+    color: var(--gold); border-bottom: 1px dotted rgba(212,169,90,0.5);
+    cursor: pointer; padding: 0 1px;
+  }
+  .reader-note {
+    margin-top: 40px; padding: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; font-size: 13px; color: var(--text-dim);
+  }
+  .reader-note strong { color: var(--text); }
+  .restart {
+    display: block; margin: 32px auto 0;
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text-dim); font-family: inherit; font-size: 13px;
+    padding: 10px 24px; border-radius: 8px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Canon Review — The Last Moon</div>
+    <div class="topbar-sub">Chapter 48 · Suggested entries</div>
+  </div>
+  <div style="display:flex;gap:16px;align-items:center;">
+    <div class="progress" id="progress">0 / 15 reviewed</div>
+    <div class="timer" id="timer">00:00</div>
+  </div>
+</div>
+
+<div class="container" id="review-view">
+  <div class="intro">
+    <p><strong>What this is:</strong> After Chapter 48 was published, 15 possible canon entries were extracted from the chapter and your existing notes.</p>
+    <p><strong>What to do:</strong> Go through them however you naturally would. Approve what's correct. Edit what's close. Reject what's wrong or premature.</p>
+    <p><strong>Then:</strong> You'll see a preview of what readers would see at Chapter 48.</p>
+  </div>
+
+  <div id="entries"></div>
+
+  <div class="finish-panel" id="finish-panel">
+    <h2>Review complete</h2>
+    <p>You processed all 15 entries.</p>
+    <span class="stat" id="total-time">00:00</span>
+    <button class="finish-btn" onclick="showReaderPreview()">Preview as reader →</button>
+  </div>
+</div>
+
+<div class="container" id="reader-preview">
+  <button class="finish-btn" style="margin-bottom:24px;" onclick="backToReview()">← Back to review</button>
+  <div class="reader-header">
+    <h1>The Seventh Shrine</h1>
+    <p>Chapter 48 · Reader at Chapter 48</p>
+  </div>
+  <div class="reader-body">
+    <p>
+      <span class="entity-link">Auren</span> stood at the edge of
+      <span class="entity-link">Moonfall</span>, watching the
+      <span class="entity-link">Ashen Coast</span>. The
+      <span class="entity-link">Moonsteel</span> blade felt heavier than it should.
+    </p>
+    <p>
+      "You shouldn't have come," said <span class="entity-link">Kael</span>.
+      He did not look at her.
+    </p>
+    <p>
+      <span class="entity-link">Lyra</span> had warned them both.
+      But <span class="entity-link">the Moon King</span>'s shadow
+      had already fallen.
+    </p>
+  </div>
+  <div class="reader-note">
+    <strong>Entities visible to readers at Chapter 48:</strong>
+    <div id="reader-visible-list" style="margin-top:10px;"></div>
+    <p style="margin-top:16px;"><strong>Entities hidden</strong> (rejected or not yet revealed): <span id="reader-hidden-count">—</span></p>
+  </div>
+  <button class="restart" onclick="location.reload()">Restart review</button>
+</div>
+
+<script>
+// 15 entries. Deliberately messy: approvals, rejects, edits, ambiguous, duplicates, context-dependent.
+
+const ENTRIES = [
+  // 4 obvious approvals
+  { id: 1, name: "Auren", type: "Character", source: "Ch. 48",
+    desc: "Warrior from Moonfall. Carries Moonsteel. Disappeared after the Seventh Shrine." },
+  { id: 2, name: "Kael", type: "Character", source: "Ch. 48",
+    desc: "Soldier of Moonfall. Connected to Auren." },
+  { id: 3, name: "Moonsteel", type: "Item", source: "Ch. 48",
+    desc: "A rare metal. Said to be forged by the Moon King." },
+  { id: 4, name: "Moonfall", type: "Location", source: "Ch. 48",
+    desc: "A city on the western coast. Scarred by the Moonfall War." },
+
+  // 3 obvious rejects
+  { id: 5, name: "The Silver Vale", type: "Location", source: "Ch. 48",
+    desc: "A location mentioned once. No context given." },
+  { id: 6, name: "Captain Ren", type: "Character", source: "Ch. 48",
+    desc: "A minor guard in the background." },
+  { id: 7, name: "The Old Road", type: "Location", source: "Ch. 48",
+    desc: "Referenced in passing." },
+
+  // 3 needing edits
+  { id: 8, name: "Lyra", type: "Character", source: "Ch. 48",
+    desc: "Scholar. Warned about the Seven Seals." },
+  { id: 9, name: "Ashen Coast", type: "Location", source: "Ch. 48",
+    desc: "East of Moonfall." },
+  { id: 10, name: "The Moon King", type: "Character", source: "Ch. 48",
+    desc: "A legendary ruler." },
+
+  // 2 ambiguous / canon-sensitive
+  { id: 11, name: "Seventh Shrine", type: "Location", source: "Ch. 48",
+    desc: "Ancient shrine associated with the Moon King. Contains the Seven Seals." },
+  { id: 12, name: "Auren's disappearance", type: "Event", source: "Ch. 48",
+    desc: "Auren disappeared after entering the Seventh Shrine." },
+
+  // 2 duplicates / near-duplicates
+  { id: 13, name: "Moonsteel blade", type: "Item", source: "Ch. 48",
+    desc: "A blade made of Moonsteel." },
+  { id: 14, name: "Moonsteel", type: "Item", source: "Ch. 48",
+    desc: "A rare metal from the Seventh Shrine." },
+
+  // 1 context-dependent
+  { id: 15, name: "The Seven Seals", type: "Item", source: "Ch. 48",
+    desc: "Seven seals guarding something within the Seventh Shrine. Their purpose is unknown." }
+];
+
+let startTime = null;
+let timerInterval = null;
+let actions = [];
+let state = {};
+
+function formatTime(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function startTimer() {
+  if (startTime) return;
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    document.getElementById('timer').textContent = formatTime(Date.now() - startTime);
+  }, 250);
+}
+
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  const total = startTime ? Date.now() - startTime : 0;
+  document.getElementById('total-time').textContent = formatTime(total);
+  return total;
+}
+
+function updateProgress() {
+  const reviewed = Object.keys(state).length;
+  document.getElementById('progress').textContent = reviewed + ' / ' + ENTRIES.length + ' reviewed';
+  if (reviewed === ENTRIES.length) {
+    const total = stopTimer();
+    document.getElementById('finish-panel').classList.add('visible');
+    actions.push({ type: 'REVIEW_COMPLETE', totalMs: total });
+    // Stash for later export
+    window.__reviewData = { actions, totalMs: total, state };
+  }
+}
+
+function renderEntries() {
+  const container = document.getElementById('entries');
+  container.innerHTML = '';
+  ENTRIES.forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'entry';
+    el.id = 'entry-' + entry.id;
+    el.innerHTML = `
+      <div class="entry-head">
+        <div>
+          <div class="entry-name">${entry.name}</div>
+          <div class="entry-type">${entry.type}</div>
+        </div>
+        <div class="entry-source">${entry.source}</div>
+      </div>
+      <div class="entry-desc" id="desc-${entry.id}">${entry.desc}</div>
+      <div class="entry-actions">
+        <button class="btn approve" onclick="takeAction(${entry.id}, 'approve')">Approve</button>
+        <button class="btn edit" onclick="takeAction(${entry.id}, 'edit')">Edit</button>
+        <button class="btn reject" onclick="takeAction(${entry.id}, 'reject')">Reject</button>
+      </div>
+      <div class="edit-area" id="edit-${entry.id}">
+        <textarea id="ta-${entry.id}">${entry.desc}</textarea>
+        <button class="btn edit-save" onclick="saveEdit(${entry.id})">Save edit</button>
+      </div>
+    `;
+    container.appendChild(el);
+  });
+}
+
+function takeAction(id, action) {
+  startTimer();
+  const entry = ENTRIES.find(e => e.id === id);
+  const el = document.getElementById('entry-' + id);
+  const buttons = el.querySelectorAll('.btn.approve, .btn.edit, .btn.reject');
+  buttons.forEach(b => b.classList.remove('active'));
+  el.classList.remove('approved', 'rejected', 'edited');
+
+  if (action === 'edit') {
+    document.getElementById('edit-' + id).classList.add('visible');
+    el.querySelector('.btn.edit').classList.add('active');
+    return;
+  }
+
+  document.getElementById('edit-' + id).classList.remove('visible');
+
+  if (action === 'approve') {
+    el.classList.add('approved');
+    el.querySelector('.btn.approve').classList.add('active');
+  } else if (action === 'reject') {
+    el.classList.add('rejected');
+    el.querySelector('.btn.reject').classList.add('active');
+  }
+
+  const prev = state[id];
+  state[id] = { action, name: entry.name, timestamp: Date.now() };
+  actions.push({
+    id, name: entry.name, action,
+    msSinceStart: startTime ? Date.now() - startTime : 0,
+    changed: prev && prev.action !== action
+  });
+  updateProgress();
+}
+
+function saveEdit(id) {
+  const entry = ENTRIES.find(e => e.id === id);
+  const newText = document.getElementById('ta-' + id).value;
+  document.getElementById('desc-' + id).textContent = newText;
+  entry.editedDesc = newText;
+  const el = document.getElementById('entry-' + id);
+  el.classList.add('edited');
+  document.getElementById('edit-' + id).classList.remove('visible');
+  el.querySelector('.btn.edit').classList.add('active');
+  const prev = state[id];
+  state[id] = { action: 'edit', name: entry.name, timestamp: Date.now(), editedTo: newText };
+  actions.push({
+    id, name: entry.name, action: 'edit_saved',
+    msSinceStart: startTime ? Date.now() - startTime : 0,
+    changed: prev && prev.action !== 'edit'
+  });
+  updateProgress();
+}
+
+function showReaderPreview() {
+  document.getElementById('review-view').style.display = 'none';
+  document.getElementById('reader-preview').classList.add('visible');
+  const visible = [];
+  const hidden = [];
+  ENTRIES.forEach(e => {
+    const s = state[e.id];
+    if (s && s.action === 'approve') visible.push(e.name);
+    else if (s && s.action === 'edit') visible.push(e.name + ' (edited)');
+    else hidden.push(e.name);
+  });
+  document.getElementById('reader-visible-list').innerHTML =
+    visible.length ? visible.map(n => '· ' + n).join('<br>') : '<em>none</em>';
+  document.getElementById('reader-hidden-count').textContent = hidden.length;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function backToReview() {
+  document.getElementById('reader-preview').classList.remove('visible');
+  document.getElementById('review-view').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Auto-export every 10 seconds to localStorage (recoverable if they close the tab)
+setInterval(() => {
+  if (startTime && Object.keys(state).length > 0) {
+    try {
+      localStorage.setItem('review_data', JSON.stringify({
+        actions, state, startTime, elapsed: Date.now() - startTime
+      }));
+    } catch(e) {}
+  }
+}, 10000);
+
+// On close, try to persist
+window.addEventListener('beforeunload', () => {
+  if (startTime) {
+    try {
+      localStorage.setItem('review_data', JSON.stringify({
+        actions, state, startTime, elapsed: Date.now() - startTime
+      }));
+    } catch(e) {}
+  }
+});
+
+renderEntries();
+</script>
+
+</body>
+</html>
