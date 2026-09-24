@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canon Review v5 — The Last Moon</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0d0d10; --surface:#16161c; --surface-2:#1e1e26;
+    --border:#2a2a35; --border-2:#3a3a48;
+    --text:#ece9e4; --text-dim:#a09a90; --text-muted:#6b665e;
+    --gold:#d4a95a; --gold-dim:#8a6f3a; --gold-glow:rgba(212,169,90,0.12);
+    --green:#6bbf7a; --red:#c96565; --blue:#6a9fd4;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(13,13,16,0.94);backdrop-filter:blur(10px);flex-wrap:wrap;gap:12px;}
+  .topbar-title{font-size:14px;font-weight:600;}
+  .topbar-sub{font-size:11px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;}
+  .topbar-right{display:flex;align-items:center;gap:16px;}
+  .progress{font-family:ui-monospace,monospace;font-size:13px;color:var(--text-dim);}
+  .undo-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all 0.15s;}
+  .undo-btn:hover:not(:disabled){border-color:var(--gold-dim);color:var(--gold);}
+  .undo-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .container{max-width:800px;margin:0 auto;padding:32px 24px 140px;}
+  .intro{padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:28px;font-size:14px;color:var(--text-dim);}
+  .intro strong{color:var(--text);}
+  .intro p+p{margin-top:10px;}
+  .intro ul{margin:10px 0 0 20px;font-size:13px;line-height:1.9;}
+  .intro ul code{background:var(--surface-2);padding:2px 6px;border-radius:4px;color:var(--gold);font-size:12px;}
+  .entry{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px;transition:border-color 0.2s,opacity 0.2s;}
+  .entry.approved{border-color:rgba(107,191,122,0.35);}
+  .entry.rejected{border-color:rgba(201,101,101,0.35);opacity:0.6;}
+  .entry.edited{border-color:rgba(212,169,90,0.55);}
+  .entry.scheduled{border-color:rgba(106,159,212,0.4);}
+  .entry.merged{border-color:rgba(106,159,212,0.4);opacity:0.7;}
+  .entry.permreject{border-color:rgba(201,101,101,0.5);opacity:0.6;}
+  .entry-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;}
+  .entry-name{font-size:17px;font-weight:600;}
+  .entry-type{font-size:10px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-top:3px;}
+  .entry-source{font-size:11px;color:var(--text-muted);font-family:ui-monospace,monospace;white-space:nowrap;}
+  .entry-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-left:8px;vertical-align:middle;}
+  .badge-approved{background:rgba(107,191,122,0.15);color:var(--green);}
+  .badge-rejected{background:rgba(201,101,101,0.15);color:var(--red);}
+  .badge-edited{background:var(--gold-glow);color:var(--gold);}
+  .badge-scheduled{background:rgba(106,159,212,0.15);color:var(--blue);}
+  .badge-merged{background:rgba(106,159,212,0.15);color:var(--blue);}
+  .badge-permreject{background:rgba(201,101,101,0.2);color:var(--red);}
+  .entry-desc{font-size:14px;color:var(--text-dim);line-height:1.6;padding:12px 14px;background:var(--surface-2);border-radius:8px;margin-bottom:14px;border:1px solid var(--border);}
+  .entry-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;transition:all 0.15s;border:1px solid var(--border);background:var(--surface-2);color:var(--text);}
+  .btn:hover:not(:disabled){border-color:var(--text-dim);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn.approve:hover{border-color:var(--green);color:var(--green);}
+  .btn.reject:hover{border-color:var(--red);color:var(--red);}
+  .btn.edit:hover{border-color:var(--gold);color:var(--gold);}
+  .btn.schedule:hover{border-color:var(--blue);color:var(--blue);}
+  .btn.merge:hover{border-color:var(--blue);color:var(--blue);}
+  .btn.never:hover{border-color:var(--red);color:var(--red);}
+  .btn.approve.active{background:rgba(107,191,122,0.15);border-color:var(--green);color:var(--green);}
+  .btn.reject.active{background:rgba(201,101,101,0.15);border-color:var(--red);color:var(--red);}
+  .btn.edit.active{background:var(--gold-glow);border-color:var(--gold);color:var(--gold);}
+  .btn.schedule.active{background:rgba(106,159,212,0.15);border-color:var(--blue);color:var(--blue);}
+  .btn.merge.active{background:rgba(106,159,212,0.15);border-color:var(--blue);color:var(--blue);}
+  .btn.never.active{background:rgba(201,101,101,0.2);border-color:var(--red);color:var(--red);}
+  .inline-panel{display:none;margin-top:14px;padding:14px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);}
+  .inline-panel.visible{display:block;}
+  .inline-panel label{display:block;font-size:11px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+  .inline-panel textarea{width:100%;min-height:70px;padding:10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;outline:none;}
+  .inline-panel textarea:focus{border-color:var(--gold);}
+  .inline-panel input[type=number]{width:100px;padding:8px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;outline:none;}
+  .inline-panel input[type=number]:focus{border-color:var(--blue);}
+  .inline-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .inline-confirm{background:var(--gold-glow);border-color:var(--gold-dim);color:var(--gold);}
+  .inline-confirm:hover{background:rgba(212,169,90,0.22);}
+  .picker-list{display:flex;flex-direction:column;gap:6px;}
+  .picker-item{padding:10px 12px;border-radius:6px;text-align:left;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:13px;cursor:pointer;transition:all 0.15s;}
+  .picker-item:hover{border-color:var(--blue);background:rgba(106,159,212,0.08);}
+  /* Merge comparison */
+  .merge-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;}
+  .merge-side{padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;}
+  .merge-side label{font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;display:block;}
+  .merge-side p{font-size:13px;color:var(--text-dim);line-height:1.5;}
+  .merge-choice{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
+  .merge-choice .btn{flex:1;min-width:100px;text-align:center;}
+  .merge-choice .btn.chosen{background:var(--blue);border-color:var(--blue);color:#0d0d10;font-weight:600;}
+  @media (max-width:600px){.merge-compare{grid-template-columns:1fr;}}
+  .finish-panel{margin-top:40px;padding:32px;background:var(--surface);border:1px solid var(--gold-dim);border-radius:12px;text-align:center;display:none;}
+  .finish-panel.visible{display:block;}
+  .finish-panel h2{font-family:Georgia,serif;font-weight:400;font-size:26px;margin-bottom:12px;}
+  .finish-panel p{color:var(--text-dim);font-size:14px;margin-bottom:20px;}
+  .finish-btn{background:var(--gold-glow);border:1px solid var(--gold);color:var(--gold);font-family:inherit;font-size:14px;font-weight:500;padding:14px 32px;border-radius:10px;cursor:pointer;transition:all 0.15s;}
+  .finish-btn:hover{background:rgba(212,169,90,0.22);}
+  #reader-view{display:none;}
+  #reader-view.visible{display:block;}
+  .preview-controls{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding:14px 20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;}
+  .preview-controls label{font-size:12px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;}
+  .preview-controls button{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;transition:all 0.15s;}
+  .preview-controls button.active{background:var(--gold-glow);border-color:var(--gold);color:var(--gold);font-weight:600;}
+  .reader-header{padding:24px 0;border-bottom:1px solid var(--border);margin-bottom:32px;}
+  .reader-header h1{font-family:Georgia,serif;font-weight:400;font-size:32px;margin-bottom:8px;}
+  .reader-header p{color:var(--text-dim);font-size:13px;}
+  .reader-body{font-family:Georgia,serif;font-size:19px;line-height:1.85;color:#ded9d1;}
+  .reader-body p{margin-bottom:24px;}
+  .entity-link{color:var(--gold);border-bottom:1px dotted rgba(212,169,90,0.5);cursor:pointer;padding:0 1px;transition:background 0.15s;}
+  .entity-link:hover{background:var(--gold-glow);}
+  #reader-card-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.22s;z-index:100;}
+  #reader-card-backdrop.visible{opacity:1;pointer-events:auto;}
+  #reader-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:480px;width:100%;max-height:82vh;overflow-y:auto;padding:28px;transform:translateY(16px) scale(0.98);transition:transform 0.22s;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
+  #reader-card-backdrop.visible #reader-card{transform:translateY(0) scale(1);}
+  .rc-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;}
+  .rc-icon{font-size:28px;line-height:1;padding-top:4px;}
+  .rc-title-block{flex:1;}
+  .rc-type{font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px;}
+  .rc-name{font-family:Georgia,serif;font-size:24px;font-weight:400;line-height:1.2;}
+  .rc-close{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;font-family:inherit;}
+  .rc-close:hover{color:var(--text);}
+  .rc-summary{font-family:Georgia,serif;font-size:16px;line-height:1.6;color:var(--text-dim);margin-bottom:20px;}
+  .rc-meta{font-size:12px;color:var(--text-muted);padding-top:16px;border-top:1px solid var(--border);}
+  .reader-note{margin-top:48px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:13px;color:var(--text-dim);}
+  .reader-note strong{color:var(--text);}
+  .back-link{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;margin-bottom:24px;transition:all 0.15s;}
+  .back-link:hover{border-color:var(--gold-dim);color:var(--gold);}
+  .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);padding:12px 24px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all 0.2s;z-index:200;box-shadow:0 12px 32px rgba(0,0,0,0.5);}
+  .toast.visible{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* Bottom undo bar */
+  #undo-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 24px;background:rgba(22,22,28,0.98);border-top:1px solid var(--border-2);display:none;justify-content:space-between;align-items:center;gap:16px;z-index:80;backdrop-filter:blur(10px);}
+  #undo-bar.visible{display:flex;}
+  #undo-bar-text{font-size:13px;color:var(--text-dim);flex:1;}
+  #undo-bar-text strong{color:var(--text);}
+  #undo-bar button{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:13px;padding:8px 18px;border-radius:8px;cursor:pointer;transition:all 0.15s;font-weight:500;}
+  #undo-bar button:hover{border-color:var(--gold);color:var(--gold);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Canon Review — The Last Moon</div>
+    <div class="topbar-sub">Chapter 48 · Suggested entries</div>
+  </div>
+  <div class="topbar-right">
+    <div class="progress" id="progress">0 / 15 reviewed</div>
+  </div>
+</div>
+
+<div class="container" id="review-view">
+  <div class="intro">
+    <p><strong>What this is:</strong> After Chapter 48 was published, 15 possible canon entries were extracted from the chapter and your existing notes.</p>
+    <p><strong>Available actions:</strong></p>
+    <ul>
+      <li><code>Approve</code> — accept the entry as-is</li>
+      <li><code>Edit</code> — change the description</li>
+      <li><code>Reject</code> — skip this time only; may appear again</li>
+      <li><code>Never Again</code> — permanent rejection; will not appear in future chapters</li>
+      <li><code>Schedule</code> — approve, but hide until a specific chapter</li>
+      <li><code>Merge</code> — combine with an existing entry; you choose which description survives</li>
+    </ul>
+    <p><strong>Undo:</strong> any action can be reversed. The last action always shows at the bottom of the screen.</p>
+  </div>
+
+  <div id="entries"></div>
+
+  <div class="finish-panel" id="finish-panel">
+    <h2>Review complete</h2>
+    <p>You processed all 15 entries.</p>
+    <button class="finish-btn" onclick="showReaderPreview()">Preview as reader →</button>
+  </div>
+</div>
+
+<div class="container" id="reader-view">
+  <button class="back-link" onclick="backToReview()">← Back to review</button>
+  <div class="preview-controls">
+    <label>Preview at chapter:</label>
+    <button id="ch-48-btn" class="active" onclick="setPreviewChapter(48)">Chapter 48</button>
+    <button id="ch-60-btn" onclick="setPreviewChapter(60)">Chapter 60</button>
+  </div>
+  <div class="reader-header">
+    <h1>The Seventh Shrine</h1>
+    <p id="reader-subtitle">Preview of the reader experience at Chapter 48</p>
+  </div>
+  <div class="reader-body" id="reader-body"></div>
+  <div class="reader-note" id="reader-note"></div>
+</div>
+
+<div id="reader-card-backdrop">
+  <div id="reader-card">
+    <div class="rc-header">
+      <div class="rc-icon" id="rc-icon"></div>
+      <div class="rc-title-block">
+        <div class="rc-type" id="rc-type"></div>
+        <h2 class="rc-name" id="rc-name"></h2>
+      </div>
+      <button class="rc-close" onclick="closeReaderCard()">✕</button>
+    </div>
+    <p class="rc-summary" id="rc-summary"></p>
+    <div class="rc-meta" id="rc-meta"></div>
+  </div>
+</div>
+
+<div id="undo-bar">
+  <div id="undo-bar-text"></div>
+  <button onclick="undo()">Undo</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const VERSION = 'v5';
+const ENTITIES = [
+  { id:1, name:"Auren", type:"Character", icon:"⚔", source:"Ch. 48", desc:"Warrior from Moonfall. Carries Moonsteel. Disappeared after the Seventh Shrine." },
+  { id:2, name:"Kael", type:"Character", icon:"🛡", source:"Ch. 48", desc:"Soldier of Moonfall. Connected to Auren." },
+  { id:3, name:"Moonsteel", type:"Item", icon:"💎", source:"Ch. 48", desc:"A rare metal. Said to be forged by the Moon King." },
+  { id:4, name:"Moonfall", type:"Location", icon:"🏔", source:"Ch. 48", desc:"A city on the western coast. Scarred by the Moonfall War." },
+  { id:5, name:"The Silver Vale", type:"Location", icon:"📍", source:"Ch. 48", desc:"A location mentioned once. No context given." },
+  { id:6, name:"Captain Ren", type:"Character", icon:"👤", source:"Ch. 48", desc:"A minor guard in the background." },
+  { id:7, name:"The Old Road", type:"Location", icon:"📍", source:"Ch. 48", desc:"Referenced in passing." },
+  { id:8, name:"Lyra", type:"Character", icon:"📖", source:"Ch. 48", desc:"Scholar. Warned about the Seven Seals." },
+  { id:9, name:"Ashen Coast", type:"Location", icon:"🌫", source:"Ch. 48", desc:"East of Moonfall." },
+  { id:10, name:"The Moon King", type:"Character", icon:"👑", source:"Ch. 48", desc:"A legendary ruler." },
+  { id:11, name:"Seventh Shrine", type:"Location", icon:"🏛", source:"Ch. 48", desc:"Ancient shrine associated with the Moon King. Contains the Seven Seals." },
+  { id:12, name:"Auren's disappearance", type:"Event", icon:"⚡", source:"Ch. 48", desc:"Auren disappeared after entering the Seventh Shrine." },
+  { id:13, name:"Moonsteel blade", type:"Item", icon:"💎", source:"Ch. 48", desc:"A blade made of Moonsteel." },
+  { id:14, name:"Moonsteel", type:"Item", icon:"💎", source:"Ch. 48", desc:"A rare metal from the Seventh Shrine." },
+  { id:15, name:"The Seven Seals", type:"Item", icon:"🗝", source:"Ch. 48", desc:"Seven seals guarding something within the Seventh Shrine. Their purpose is unknown." }
+];
+
+let state = {};       // { id: { type, desc, chapter, targetId, mergeDesc } }
+let stack = [];       // [ { id, prevState } ]
+let startTime = Date.now();
+let previewChapter = 48;
+let pendingMerge = null; // { id, targetId, choice }
+
+const $ = id => document.getElementById(id);
+
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); }
+
+function saveState(){
+  try { localStorage.setItem('review_v5_state', JSON.stringify({ state, stack, startTime, elapsed: Date.now()-startTime })); } catch(e){}
+}
+
+function applyState(el, s){
+  el.classList.remove('approved','rejected','edited','scheduled','merged','permreject');
+  el.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  el.querySelectorAll('.entry-badge').forEach(b => b.remove());
+
+  const nameEl = el.querySelector('.entry-name');
+  let badge = null, label = '';
+  if (s) {
+    if (s.type==='approve'){ el.classList.add('approved'); badge='badge-approved'; label='APPROVED'; setActive(el,'approve'); }
+    else if (s.type==='edit'){ el.classList.add('edited'); badge='badge-edited'; label='EDITED'; setActive(el,'edit'); }
+    else if (s.type==='reject'){ el.classList.add('rejected'); badge='badge-rejected'; label='REJECTED'; setActive(el,'reject'); }
+    else if (s.type==='permanent_reject'){ el.classList.add('permreject'); badge='badge-permreject'; label='NEVER AGAIN'; setActive(el,'never'); }
+    else if (s.type==='schedule'){ el.classList.add('scheduled'); badge='badge-scheduled'; label='SHOW AT CH. '+s.chapter; setActive(el,'schedule'); }
+    else if (s.type==='merge'){ el.classList.add('merged'); badge='badge-merged'; label='MERGED INTO '+ (ENTITIES.find(e=>e.id===s.targetId)?.name || '?'); setActive(el,'merge'); }
+  }
+  if (badge){ const span=document.createElement('span'); span.className='entry-badge '+badge; span.textContent=label; nameEl.appendChild(span); }
+
+  const descEl = el.querySelector('.entry-desc');
+  const entity = ENTITIES.find(e => e.id === parseInt(el.dataset.id));
+  if (s && s.type==='edit' && s.desc) descEl.textContent = s.desc;
+  else if (s && s.type==='merge') descEl.textContent = 'Merged into ' + (ENTITIES.find(e=>e.id===s.targetId)?.name || '?');
+  else descEl.textContent = entity ? entity.desc : '';
+
+  el.querySelectorAll('.inline-panel').forEach(p => p.classList.remove('visible'));
+}
+
+function setActive(el, type){
+  const btn = el.querySelector('.btn.' + type);
+  if (btn) btn.classList.add('active');
+}
+
+function takeAction(id, action, extra){
+  const el = $('entry-'+id);
+  const prevState = state[id] ? { ...state[id] } : null;
+  stack.push({ id, prevState, actionLabel: describeAction(id, action, extra) });
+
+  if (action==='approve'){ state[id] = { type:'approve' }; }
+  else if (action==='edit'){ const ta=el.querySelector('textarea'); const newDesc=ta.value.trim(); const entity=ENTITIES.find(e=>e.id===id); state[id]={ type:'edit', desc:newDesc||entity.desc }; }
+  else if (action==='reject'){ state[id]={ type:'reject' }; }
+  else if (action==='permanent_reject'){ state[id]={ type:'permanent_reject' }; }
+  else if (action==='schedule'){ state[id]={ type:'schedule', chapter:extra }; }
+  else if (action==='merge'){ state[id]={ type:'merge', targetId:extra.targetId, mergeDesc:extra.mergeDesc }; }
+
+  // If merging, update the target entry's description too
+  if (action==='merge' && extra.mergeDesc){
+    const targetEl = $('entry-'+extra.targetId);
+    const targetState = state[extra.targetId];
+    // Show the merged description on the target
+    if (targetEl){
+      // Store as an overlay desc
+      if (!state[extra.targetId]) state[extra.targetId] = { type:'approve' };
+      state[extra.targetId].desc = extra.mergeDesc;
+      applyState(targetEl, state[extra.targetId]);
+    }
+  }
+
+  applyState(el, state[id]);
+  updateProgress();
+  updateUndoBar();
+  saveState();
+}
+
+function describeAction(id, action, extra){
+  const entity = ENTITIES.find(e => e.id === id);
+  const name = entity ? entity.name : 'entry';
+  if (action==='approve') return 'Approved "' + name + '"';
+  if (action==='edit') return 'Edited "' + name + '"';
+  if (action==='reject') return 'Rejected "' + name + '"';
+  if (action==='permanent_reject') return 'Permanently rejected "' + name + '"';
+  if (action==='schedule') return 'Scheduled "' + name + '" for Chapter ' + extra;
+  if (action==='merge'){ const t=ENTITIES.find(e=>e.id===extra.targetId); return 'Merged "' + name + '" into "' + (t?t.name:'?') + '"'; }
+  return 'Action on ' + name;
+}
+
+function undo(){
+  if (stack.length === 0) return;
+  const last = stack.pop();
+  const el = $('entry-'+last.id);
+  const wasMerge = last.prevState === null && state[last.id] && state[last.id].type === 'merge';
+  if (last.prevState) state[last.id] = last.prevState;
+  else delete state[last.id];
+  applyState(el, state[last.id] || null);
+  updateProgress();
+  updateUndoBar();
+  saveState();
+  toast('Undid: ' + (last.actionLabel || 'last action'));
+}
+
+function updateUndoBar(){
+  const bar = $('undo-bar');
+  const text = $('undo-bar-text');
+  if (stack.length === 0){ bar.classList.remove('visible'); return; }
+  const last = stack[stack.length-1];
+  text.innerHTML = 'Last action: <strong>' + (last.actionLabel || 'Unknown') + '</strong>';
+  bar.classList.add('visible');
+}
+
+function updateProgress(){
+  const reviewed = Object.keys(state).length;
+  $('progress').textContent = reviewed + ' / ' + ENTITIES.length + ' reviewed';
+  if (reviewed === ENTITIES.length) $('finish-panel').classList.add('visible');
+  else $('finish-panel').classList.remove('visible');
+}
+
+function renderEntries(){
+  const container = $('entries');
+  container.innerHTML = '';
+  ENTITIES.forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'entry';
+    el.id = 'entry-'+entry.id;
+    el.dataset.id = entry.id;
+    el.innerHTML = `
+      <div class="entry-head">
+        <div>
+          <div class="entry-name">${entry.name}</div>
+          <div class="entry-type">${entry.type}</div>
+        </div>
+        <div class="entry-source">${entry.source}</div>
+      </div>
+      <div class="entry-desc">${entry.desc}</div>
+      <div class="entry-actions">
+        <button class="btn approve" onclick="takeAction(${entry.id}, 'approve')">Approve</button>
+        <button class="btn edit" onclick="openPanel(${entry.id}, 'edit')">Edit</button>
+        <button class="btn reject" onclick="takeAction(${entry.id}, 'reject')">Reject</button>
+        <button class="btn never" onclick="takeAction(${entry.id}, 'permanent_reject')">Never Again</button>
+        <button class="btn schedule" onclick="openPanel(${entry.id}, 'schedule')">Schedule</button>
+        <button class="btn merge" onclick="openPanel(${entry.id}, 'merge')">Merge with…</button>
+      </div>
+      <div class="inline-panel" id="panel-edit-${entry.id}">
+        <label>New description</label>
+        <textarea id="ta-${entry.id}">${entry.desc}</textarea>
+        <div class="inline-row"><button class="btn inline-confirm" onclick="takeAction(${entry.id}, 'edit')">Save edit</button></div>
+      </div>
+      <div class="inline-panel" id="panel-schedule-${entry.id}">
+        <label>Show this starting at chapter</label>
+        <div class="inline-row">
+          <input type="number" id="ch-${entry.id}" min="1" max="500" value="60">
+          <button class="btn inline-confirm" onclick="confirmSchedule(${entry.id})">Schedule</button>
+        </div>
+      </div>
+      <div class="inline-panel" id="panel-merge-${entry.id}">
+        <label>Merge into which existing entry?</label>
+        <div class="picker-list" id="picker-${entry.id}"></div>
+        <div id="merge-compare-${entry.id}"></div>
+      </div>
+    `;
+    container.appendChild(el);
+  });
+}
+
+function openPanel(id, type){
+  const el = $('entry-'+id);
+  el.querySelectorAll('.inline-panel').forEach(p => p.classList.remove('visible'));
+  const panel = $('panel-'+type+'-'+id);
+  if (!panel) return;
+  panel.classList.add('visible');
+  if (type==='edit'){ const ta=panel.querySelector('textarea'); ta.focus(); }
+  else if (type==='schedule'){ panel.querySelector('input').focus(); }
+  else if (type==='merge'){
+    const picker = $('picker-'+id);
+    picker.innerHTML = '';
+    $('merge-compare-'+id).innerHTML = '';
+    ENTITIES.filter(e => e.id !== id).forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'picker-item';
+      btn.textContent = c.name + ' · ' + c.type;
+      btn.onclick = () => showMergeCompare(id, c.id);
+      picker.appendChild(btn);
+    });
+  }
+}
+
+function showMergeCompare(id, targetId){
+  const sourceEntity = ENTITIES.find(e => e.id === id);
+  const targetEntity = ENTITIES.find(e => e.id === targetId);
+  const targetCurrentDesc = state[targetId] && state[targetId].desc ? state[targetId].desc : targetEntity.desc;
+  const sourceDesc = sourceEntity.desc;
+
+  const container = $('merge-compare-'+id);
+  container.innerHTML = `
+    <label style="margin-top:16px;display:block;">Merging "${sourceEntity.name}" into "${targetEntity.name}"</label>
+    <div class="merge-compare">
+      <div class="merge-side">
+        <label>Current description on "${targetEntity.name}"</label>
+        <p>${targetCurrentDesc}</p>
+      </div>
+      <div class="merge-side">
+        <label>Incoming description from "${sourceEntity.name}"</label>
+        <p>${sourceDesc}</p>
+      </div>
+    </div>
+    <div class="merge-choice">
+      <button class="btn" onclick="confirmMerge(${id}, ${targetId}, 'current')">Keep current</button>
+      <button class="btn" onclick="confirmMerge(${id}, ${targetId}, 'incoming')">Keep incoming</button>
+      <button class="btn" onclick="confirmMerge(${id}, ${targetId}, 'combine')">Combine both</button>
+    </div>
+  `;
+}
+
+function confirmMerge(id, targetId, choice){
+  const sourceEntity = ENTITIES.find(e => e.id === id);
+  const targetEntity = ENTITIES.find(e => e.id === targetId);
+  const targetCurrentDesc = state[targetId] && state[targetId].desc ? state[targetId].desc : targetEntity.desc;
+  const sourceDesc = sourceEntity.desc;
+
+  let finalDesc = targetCurrentDesc;
+  if (choice === 'incoming') finalDesc = sourceDesc;
+  else if (choice === 'combine') finalDesc = targetCurrentDesc.replace(/\.$/, '') + '. Also: ' + sourceDesc.charAt(0).toLowerCase() + sourceDesc.slice(1);
+
+  takeAction(id, 'merge', { targetId, mergeDesc: finalDesc, choice });
+  toast('Merged. ' + targetEntity.name + ' now reads: ' + (finalDesc.length > 60 ? finalDesc.slice(0,60)+'…' : finalDesc));
+}
+
+function confirmSchedule(id){
+  const chapter = parseInt($('ch-'+id).value, 10) || 60;
+  takeAction(id, 'schedule', chapter);
+}
+
+function setPreviewChapter(ch){
+  previewChapter = ch;
+  $('ch-48-btn').classList.toggle('active', ch === 48);
+  $('ch-60-btn').classList.toggle('active', ch === 60);
+  $('reader-subtitle').textContent = 'Preview of the reader experience at Chapter ' + ch;
+  renderPreview();
+}
+
+function renderPreview(){
+  // An entity is visible if:
+  // - its state is approve or edit (not reject, not permanent_reject, not merge)
+  // - its reveal chapter is <= previewChapter (schedule)
+  const approved = ENTITIES.filter(e => {
+    const s = state[e.id];
+    if (!s) return false;
+    if (s.type === 'approve' || s.type === 'edit') {
+      if (s.chapter && s.chapter > previewChapter) return false;
+      return true;
+    }
+    if (s.type === 'schedule') return s.chapter <= previewChapter;
+    return false;
+  });
+  const approvedIds = new Set(approved.map(e => e.id));
+
+  const chapterText = [
+    { text: 'Auren stood at the edge of Moonfall, watching the Ashen Coast. The Moonsteel blade felt heavier than it should.' },
+    { text: '"You shouldn\'t have come," said Kael. He did not look at her.' },
+    { text: 'Lyra had warned them both. But the Moon King\'s shadow had already fallen.' }
+  ];
+
+  const body = $('reader-body');
+  body.innerHTML = '';
+  chapterText.forEach(p => {
+    let html = p.text;
+    approved.forEach(e => {
+      const regex = new RegExp('\\b' + escapeRegex(e.name) + '\\b', 'g');
+      html = html.replace(regex, '<span class="entity-link" onclick="openReaderCard(' + e.id + ')">' + e.name + '</span>');
+    });
+    const pEl = document.createElement('p');
+    pEl.innerHTML = html;
+    body.appendChild(pEl);
+  });
+
+  const noteEl = $('reader-note');
+  const visible = approved.map(e => e.name).join(', ') || 'none';
+  const scheduled = ENTITIES.filter(e => state[e.id] && state[e.id].type === 'schedule' && state[e.id].chapter > previewChapter).map(e => e.name + ' (Ch. ' + state[e.id].chapter + ')');
+  const hidden = ENTITIES.filter(e => !approvedIds.has(e.id)).length;
+  noteEl.innerHTML =
+    '<strong>Visible at Chapter ' + previewChapter + ':</strong><br>' + visible +
+    '<br><br><strong>Hidden (rejected, scheduled later, or merged):</strong> ' + hidden +
+    (scheduled.length ? '<br><br><strong>Waiting for later chapter:</strong> ' + scheduled.join(', ') : '');
+}
+
+function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function openReaderCard(id){
+  const entity = ENTITIES.find(e => e.id === id);
+  if (!entity) return;
+  const s = state[id];
+  if (!s) return;
+  $('rc-icon').textContent = entity.icon;
+  $('rc-name').textContent = entity.name;
+  $('rc-type').textContent = entity.type;
+  $('rc-summary').textContent = s.desc || entity.desc;
+  $('rc-meta').textContent = 'Reader at Chapter ' + previewChapter + ' · First encountered earlier in this story';
+  $('reader-card-backdrop').classList.add('visible');
+}
+
+function closeReaderCard(){ $('reader-card-backdrop').classList.remove('visible'); }
+
+function showReaderPreview(){
+  $('review-view').style.display = 'none';
+  $('reader-view').classList.add('visible');
+  setPreviewChapter(48);
+}
+
+function backToReview(){
+  $('reader-view').classList.remove('visible');
+  $('review-view').style.display = 'block';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+setInterval(saveState, 10000);
+window.addEventListener('beforeunload', saveState);
+
+renderEntries();
+
+try {
+  const saved = JSON.parse(localStorage.getItem('review_v5_state') || 'null');
+  if (saved && saved.state){
+    state = saved.state;
+    stack = saved.stack || [];
+    startTime = saved.startTime || Date.now();
+    Object.keys(state).forEach(id => {
+      const el = $('entry-'+id);
+      if (el) applyState(el, state[id]);
+    });
+    updateProgress();
+    updateUndoBar();
+  }
+} catch(e){}
+
+window.__reviewV5 = { get state(){ return state; }, get stack(){ return stack; }, get totalMs(){ return Date.now()-startTime; }, VERSION };
+console.log('Review v5 ready. Export: copy(JSON.stringify(window.__reviewV5, null, 2))');
+</script>
+
+</body>
+</html>
