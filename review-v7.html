@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canon Review v7 — The Last Moon</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0d0d10; --surface:#16161c; --surface-2:#1e1e26; --surface-3:#252530;
+    --border:#2a2a35; --border-2:#3a3a48;
+    --text:#ece9e4; --text-dim:#a09a90; --text-muted:#6b665e;
+    --gold:#d4a95a; --gold-dim:#8a6f3a; --gold-glow:rgba(212,169,90,0.12);
+    --green:#6bbf7a; --red:#c96565; --blue:#6a9fd4; --purple:#a07cd4;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(13,13,16,0.94);backdrop-filter:blur(10px);flex-wrap:wrap;gap:12px;}
+  .topbar-title{font-size:14px;font-weight:600;}
+  .topbar-sub{font-size:11px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;}
+  .topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .nav-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer;transition:all 0.15s;}
+  .nav-btn:hover{border-color:var(--gold-dim);color:var(--gold);}
+  .progress{font-family:ui-monospace,monospace;font-size:12px;color:var(--text-dim);}
+  .container{max-width:860px;margin:0 auto;padding:28px 24px 180px;}
+  .intro{padding:18px 20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:24px;font-size:13px;color:var(--text-dim);line-height:1.65;}
+  .intro strong{color:var(--text);}
+  .intro p + p { margin-top: 8px; }
+  .intro code{background:var(--surface-2);padding:2px 6px;border-radius:4px;color:var(--gold);font-size:12px;}
+  /* Card */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden;transition:border-color 0.2s;}
+  .card.completed{opacity:0.7;}
+  .card.accepted { border-left: 3px solid var(--green); }
+  .card.edited { border-left: 3px solid var(--gold); }
+  .card.merged { border-left: 3px solid var(--purple); }
+  .card.deferred { border-left: 3px solid var(--blue); }
+  .card.rejected { border-left: 3px solid var(--text-muted); }
+  .card.suppressed { border-left: 3px solid var(--red); }
+
+  .card-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);}
+  .card-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:4px;}
+  .card-name{font-size:17px;font-weight:600;line-height:1.3;}
+  .card-meta{font-size:12px;color:var(--text-muted);}
+  .card-meta .entity-link-inline{color:var(--gold);}
+  .card-source{font-size:11px;color:var(--text-muted);font-family:ui-monospace,monospace;}
+
+  .card-body{padding:16px 20px;}
+  .section-label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+  .section{margin-bottom:16px;}
+  .section:last-child{margin-bottom:0;}
+
+  .evidence{font-family:Georgia,serif;font-size:14px;line-height:1.6;color:var(--text-dim);padding:12px 14px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--border-2);}
+  .evidence .source{display:block;margin-top:8px;font-size:11px;color:var(--text-muted);font-family:ui-monospace,monospace;font-style:normal;}
+
+  .match-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface-2);border-radius:8px;font-size:13px;gap:12px;}
+  .match-name{color:var(--text);font-weight:500;}
+  .match-meta{font-size:11px;color:var(--text-muted);font-family:ui-monospace,monospace;}
+  .match-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;}
+  .match-btn:hover{border-color:var(--gold-dim);color:var(--gold);}
+
+  .proposed{font-family:Georgia,serif;font-size:14px;line-height:1.6;color:var(--text);padding:12px 14px;background:var(--surface-2);border-radius:8px;border:1px dashed var(--border-2);}
+  .proposed.mutated{border-style:solid;border-color:var(--gold-dim);}
+
+  .consequence{padding:12px 14px;background:rgba(107,191,122,0.06);border:1px solid rgba(107,191,122,0.2);border-radius:8px;font-size:12px;color:var(--text-dim);line-height:1.7;}
+  .consequence .arrow{color:var(--green);font-weight:700;margin-right:6px;}
+
+  .state-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 20px;background:var(--surface-2);border-top:1px solid var(--border);}
+  .state-cell{font-size:12px;}
+  .state-cell .label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;}
+  .state-cell .val{font-family:ui-monospace,monospace;font-size:12px;color:var(--text);}
+  .state-cell .val .yes{color:var(--green);}
+  .state-cell .val .no{color:var(--red);}
+  .state-cell .val .later{color:var(--blue);}
+  .state-cell .val .pending{color:var(--text-muted);}
+
+  .card-actions{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;background:var(--surface);}
+  .btn{font-family:inherit;font-size:12px;font-weight:500;padding:7px 14px;border-radius:7px;cursor:pointer;transition:all 0.15s;border:1px solid var(--border);background:var(--surface-2);color:var(--text);}
+  .btn:hover:not(:disabled){border-color:var(--text-dim);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn.primary{background:var(--gold-glow);border-color:var(--gold-dim);color:var(--gold);}
+  .btn.primary:hover{background:rgba(212,169,90,0.22);border-color:var(--gold);}
+  .btn.danger{background:rgba(201,101,101,0.08);border-color:rgba(201,101,101,0.3);color:var(--red);}
+  .btn.danger:hover{background:rgba(201,101,101,0.18);border-color:var(--red);}
+  .btn.muted{color:var(--text-muted);}
+  .btn.muted:hover{border-color:var(--text-muted);color:var(--text);}
+
+  /* Inline panels */
+  .panel{display:none;padding:16px 20px;background:var(--surface-2);border-top:1px solid var(--border);}
+  .panel.visible{display:block;}
+  .panel-label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;}
+  .panel textarea{width:100%;min-height:80px;padding:10px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:Georgia,serif;font-size:14px;line-height:1.6;resize:vertical;outline:none;}
+  .panel textarea:focus{border-color:var(--gold);}
+  .panel input[type=number]{width:100px;padding:8px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;outline:none;}
+  .panel input[type=number]:focus{border-color:var(--blue);}
+  .panel-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+
+  /* Merge flow */
+  .merge-picker{display:flex;flex-direction:column;gap:6px;}
+  .merge-candidate{padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:6px;text-align:left;font-family:inherit;font-size:13px;color:var(--text);cursor:pointer;transition:all 0.15s;}
+  .merge-candidate:hover{border-color:var(--purple);background:rgba(160,124,212,0.06);}
+  .merge-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+  .merge-side{padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;}
+  .merge-side label{font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;display:block;font-weight:600;}
+  .merge-side p{font-size:13px;color:var(--text-dim);line-height:1.55;font-family:Georgia,serif;}
+  .merge-choice-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .merge-choice-row .btn{flex:1;min-width:120px;text-align:center;}
+
+  /* Defer panel */
+  .defer-options{display:flex;flex-direction:column;gap:8px;}
+  .defer-option{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.15s;}
+  .defer-option:hover{border-color:var(--blue);background:rgba(106,159,212,0.06);}
+  .defer-option input{margin-top:3px;accent-color:var(--blue);}
+  .defer-option .title{font-size:13px;font-weight:600;color:var(--text);}
+  .defer-option .desc{font-size:12px;color:var(--text-muted);margin-top:3px;}
+
+  /* Finish */
+  .finish-panel{margin-top:28px;padding:28px;background:var(--surface);border:1px solid var(--gold-dim);border-radius:14px;text-align:center;display:none;}
+  .finish-panel.visible{display:block;}
+  .finish-panel h2{font-family:Georgia,serif;font-weight:400;font-size:24px;margin-bottom:10px;}
+  .finish-panel p{color:var(--text-dim);font-size:13px;margin-bottom:16px;}
+  .finish-btn{background:var(--gold-glow);border:1px solid var(--gold);color:var(--gold);font-family:inherit;font-size:14px;font-weight:500;padding:12px 28px;border-radius:10px;cursor:pointer;transition:all 0.15s;}
+  .finish-btn:hover{background:rgba(212,169,90,0.22);}
+
+  /* Views */
+  #reader-view,#ignored-view,#suppressed-view{display:none;}
+  #reader-view.visible,#ignored-view.visible,#suppressed-view.visible{display:block;}
+
+  .back-link{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;margin-bottom:24px;transition:all 0.15s;}
+  .back-link:hover{border-color:var(--gold-dim);color:var(--gold);}
+
+  .preview-controls{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;}
+  .preview-controls label{font-size:12px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;}
+  .preview-controls button{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:13px;padding:7px 14px;border-radius:7px;cursor:pointer;transition:all 0.15s;}
+  .preview-controls button.active{background:var(--gold-glow);border-color:var(--gold);color:var(--gold);font-weight:600;}
+
+  .reader-header{padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:28px;}
+  .reader-header h1{font-family:Georgia,serif;font-weight:400;font-size:30px;margin-bottom:6px;}
+  .reader-header p{color:var(--text-dim);font-size:13px;}
+  .reader-body{font-family:Georgia,serif;font-size:18px;line-height:1.85;color:#ded9d1;}
+  .reader-body p{margin-bottom:22px;}
+  .entity-link{color:var(--gold);border-bottom:1px dotted rgba(212,169,90,0.5);cursor:pointer;padding:0 1px;transition:background 0.15s;}
+  .entity-link:hover{background:var(--gold-glow);}
+  .entity-link.stub{color:var(--text-muted);border-bottom-color:var(--border-2);}
+
+  /* Reader card */
+  #reader-card-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.22s;z-index:100;}
+  #reader-card-backdrop.visible{opacity:1;pointer-events:auto;}
+  #reader-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:500px;width:100%;max-height:82vh;overflow-y:auto;padding:28px;transform:translateY(16px) scale(0.98);transition:transform 0.22s;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
+  #reader-card-backdrop.visible #reader-card{transform:translateY(0) scale(1);}
+  #reader-card.stub-card{border-style:dashed;border-color:var(--border-2);}
+  .rc-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;}
+  .rc-icon{font-size:26px;line-height:1;padding-top:4px;}
+  .rc-title-block{flex:1;}
+  .rc-type{font-size:10px;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:4px;font-weight:600;}
+  .rc-name{font-family:Georgia,serif;font-size:22px;font-weight:400;line-height:1.2;}
+  .rc-close{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;font-family:inherit;}
+  .rc-close:hover{color:var(--text);}
+  .rc-summary{font-family:Georgia,serif;font-size:15px;line-height:1.6;color:var(--text-dim);margin-bottom:18px;}
+  .rc-stub-text{font-family:Georgia,serif;font-size:15px;line-height:1.6;color:var(--text-muted);font-style:italic;margin-bottom:18px;}
+  .rc-meta{font-size:12px;color:var(--text-muted);padding-top:14px;border-top:1px solid var(--border);}
+
+  .reader-note{margin-top:32px;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--text-dim);line-height:1.7;}
+  .reader-note strong{color:var(--text);}
+  .reader-note .diag-label{display:inline-block;font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+
+  /* Bottom bars */
+  #undo-bar{position:fixed;bottom:0;left:0;right:0;padding:10px 24px;background:rgba(22,22,28,0.98);border-top:1px solid var(--border-2);display:none;justify-content:space-between;align-items:center;gap:16px;z-index:80;backdrop-filter:blur(10px);}
+  #undo-bar.visible{display:flex;}
+  #undo-bar-text{font-size:12px;color:var(--text-dim);flex:1;}
+  #undo-bar-text strong{color:var(--text);}
+  #undo-bar button{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12px;padding:7px 16px;border-radius:7px;cursor:pointer;transition:all 0.15s;font-weight:500;}
+  #undo-bar button:hover{border-color:var(--gold);color:var(--gold);}
+
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);padding:11px 22px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all 0.2s;z-index:200;box-shadow:0 12px 32px rgba(0,0,0,0.5);max-width:560px;}
+  .toast.visible{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* Suppress/Ignored rows */
+  .ignored-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);gap:16px;}
+  .ignored-row:last-child{border-bottom:none;}
+  .ignored-info{flex:1;}
+  .ignored-name{font-size:15px;font-weight:600;margin-bottom:3px;}
+  .ignored-meta{font-size:12px;color:var(--text-muted);}
+  .restore-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:12px;padding:7px 14px;border-radius:7px;cursor:pointer;transition:all 0.15s;}
+  .restore-btn:hover{border-color:var(--green);color:var(--green);}
+  .empty-ignored{padding:32px;text-align:center;color:var(--text-muted);font-style:italic;}
+
+  @media (max-width:600px){
+    .state-panel{grid-template-columns:1fr;}
+    .merge-compare{grid-template-columns:1fr;}
+    .container{padding:20px 16px 180px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Canon Review — The Last Moon</div>
+    <div class="topbar-sub">Chapter 48 · 15 suggestions</div>
+  </div>
+  <div class="topbar-right">
+    <button class="nav-btn" onclick="showSuppressed()">Suppressed (<span id="suppressed-count">0</span>)</button>
+    <div class="progress" id="progress">0 / 15</div>
+  </div>
+</div>
+
+<div class="container" id="review-view">
+  <div class="intro">
+    <p><strong>The model:</strong> Each card is a <em>suggestion</em> (something found in a chapter). The suggestion points at an <em>entity</em> (the persistent thing in your universe). Accepting a suggestion adds evidence to the entity and sets when readers see it.</p>
+    <p><strong>Actions:</strong> Accept · Edit · Merge · Defer · Reject this suggestion · Suppress this entity (stop showing it to me)</p>
+    <p><strong>Reject vs Suppress:</strong> Reject means "this appearance is noise, don't decide anything." Suppress means "stop telling me about this entity at all."</p>
+    <p><strong>Undo:</strong> everything is reversible. Bottom bar shows your last action.</p>
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="finish-panel" id="finish-panel">
+    <h2>Review complete</h2>
+    <p>All 15 suggestions resolved.</p>
+    <button class="finish-btn" onclick="showReaderPreview()">Preview as reader →</button>
+  </div>
+</div>
+
+<div class="container" id="reader-view">
+  <button class="back-link" onclick="backToReview()">← Back to review</button>
+  <div class="preview-controls">
+    <label>Reader at chapter:</label>
+    <button id="ch-48-btn" class="active" onclick="setPreviewChapter(48)">Chapter 48</button>
+    <button id="ch-60-btn" onclick="setPreviewChapter(60)">Chapter 60</button>
+  </div>
+  <div class="reader-header">
+    <h1 id="reader-title">The Seventh Shrine</h1>
+    <p id="reader-subtitle">Reader at Chapter 48</p>
+  </div>
+  <div class="reader-body" id="reader-body"></div>
+  <div class="reader-note" id="reader-note"></div>
+</div>
+
+<div class="container" id="suppressed-view">
+  <button class="back-link" onclick="backToReview()">← Back to review</button>
+  <div class="reader-header">
+    <h1>Suppressed</h1>
+    <p>Entities you've told the system to stop suggesting. The entities themselves are still canon. Only the suggestions are hidden.</p>
+  </div>
+  <div id="suppressed-list"></div>
+</div>
+
+<div id="reader-card-backdrop">
+  <div id="reader-card">
+    <div class="rc-header">
+      <div class="rc-icon" id="rc-icon"></div>
+      <div class="rc-title-block">
+        <div class="rc-type" id="rc-type"></div>
+        <h2 class="rc-name" id="rc-name"></h2>
+      </div>
+      <button class="rc-close" onclick="closeReaderCard()">✕</button>
+    </div>
+    <p class="rc-summary" id="rc-summary"></p>
+    <p class="rc-stub-text" id="rc-stub-text" style="display:none;"></p>
+    <div class="rc-meta" id="rc-meta"></div>
+  </div>
+</div>
+
+<div id="undo-bar">
+  <div id="undo-bar-text"></div>
+  <button onclick="undo()">Undo</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   THE MODEL
+   Four separate things:
+   
+   1. ENTITY  — the persistent thing in the universe
+      { id, name, type, icon, canonDesc, revealChapter, canonState, suppressed, firstMentioned }
+   
+   2. SUGGESTION — an event from a chapter
+      { id, chapter, evidenceText, evidenceSource, proposedDesc, entityId, state }
+      state: pending | accepted | edited | merged | deferred | rejected
+   
+   3. ACTION LOG — what the creator did, in order (for undo)
+   
+   4. READER STATE — computed: entity is visible to reader if revealChapter <= readerChapter
+      and not suppressed and canonState === 'canon'
+   ============================================================ */
+
+const VERSION = 'v7';
+
+// Fixture: 15 entities, and 15 suggestions (one per card)
+const ENTITIES = [
+  { id: 1,  name: "Auren",             type: "Character", icon: "⚔", firstMentioned: 3,  canonDesc: "Warrior from Moonfall. Carries Moonsteel. Disappeared after the Seventh Shrine.", canonState: "canon", revealChapter: 3,  suppressed: false },
+  { id: 2,  name: "Kael",              type: "Character", icon: "🛡", firstMentioned: 7,  canonDesc: "Soldier of Moonfall. Connected to Auren.",                                    canonState: "canon", revealChapter: 7,  suppressed: false },
+  { id: 3,  name: "Moonsteel",         type: "Item",      icon: "💎", firstMentioned: 3,  canonDesc: "A rare metal. Said to be forged by the Moon King.",                     canonState: "canon", revealChapter: 3,  suppressed: false },
+  { id: 4,  name: "Moonfall",          type: "Location",  icon: "🏔", firstMentioned: 5,  canonDesc: "A city on the western coast. Scarred by the Moonfall War.",             canonState: "canon", revealChapter: 5,  suppressed: false },
+  { id: 5,  name: "The Silver Vale",   type: "Location",  icon: "📍", firstMentioned: 48, canonDesc: "A location mentioned once.",                                            canonState: "draft", revealChapter: null, suppressed: false },
+  { id: 6,  name: "Captain Ren",       type: "Character", icon: "👤", firstMentioned: 44, canonDesc: "A minor guard.",                                                        canonState: "draft", revealChapter: null, suppressed: false },
+  { id: 7,  name: "The Old Road",      type: "Location",  icon: "📍", firstMentioned: 12, canonDesc: "Referenced in passing.",                                                canonState: "draft", revealChapter: null, suppressed: false },
+  { id: 8,  name: "Lyra",              type: "Character", icon: "📖", firstMentioned: 8,  canonDesc: "Scholar. Warned about the Seven Seals.",                                 canonState: "canon", revealChapter: 8,  suppressed: false },
+  { id: 9,  name: "Ashen Coast",       type: "Location",  icon: "🌫", firstMentioned: 22, canonDesc: "East of Moonfall.",                                                       canonState: "canon", revealChapter: 22, suppressed: false },
+  { id: 10, name: "The Moon King",     type: "Character", icon: "👑", firstMentioned: 30, canonDesc: "A legendary ruler.",                                                      canonState: "canon", revealChapter: 30, suppressed: false },
+  { id: 11, name: "Seventh Shrine",    type: "Location",  icon: "🏛", firstMentioned: 8,  canonDesc: "Ancient shrine associated with the Moon King.",                           canonState: "canon", revealChapter: 8,  suppressed: false },
+  { id: 12, name: "Auren's disappearance", type: "Event", icon: "⚡", firstMentioned: 18, canonDesc: "Auren disappeared after entering the Seventh Shrine.",                     canonState: "draft", revealChapter: null, suppressed: false },
+  { id: 13, name: "Moonsteel blade",   type: "Item",      icon: "💎", firstMentioned: 12, canonDesc: "A blade made of Moonsteel.",                                              canonState: "draft", revealChapter: null, suppressed: false },
+  { id: 14, name: "Moonsteel",         type: "Item",      icon: "💎", firstMentioned: 12, canonDesc: "A rare metal from the Seventh Shrine.",                                    canonState: "draft", revealChapter: null, suppressed: false },
+  { id: 15, name: "The Seven Seals",   type: "Item",      icon: "🗝", firstMentioned: 34, canonDesc: "Seven seals within the Seventh Shrine.",                                  canonState: "canon", revealChapter: 34, suppressed: false },
+];
+
+// Suggestions: each card is one suggestion
+const SUGGESTIONS = [
+  { id: 101, entityId: 1,  chapter: 48, evidenceText: "Auren entered the Seventh Shrine carrying Moonsteel.", evidenceSource: "Chapter 48 · paragraph 3", proposedDesc: "Warrior from Moonfall. Carries Moonsteel.", state: "pending" },
+  { id: 102, entityId: 2,  chapter: 48, evidenceText: '"You shouldn\'t have come," said Kael.',              evidenceSource: "Chapter 48 · paragraph 5", proposedDesc: "Soldier of Moonfall. Connected to Auren.", state: "pending" },
+  { id: 103, entityId: 3,  chapter: 48, evidenceText: "Auren entered the Seventh Shrine carrying Moonsteel.", evidenceSource: "Chapter 48 · paragraph 3", proposedDesc: "A rare metal. Said to be forged by the Moon King.", state: "pending" },
+  { id: 104, entityId: 4,  chapter: 48, evidenceText: "He stood at the edge of Moonfall.",                    evidenceSource: "Chapter 48 · paragraph 5", proposedDesc: "A city on the western coast. Scarred by the Moonfall War.", state: "pending" },
+  { id: 105, entityId: 5,  chapter: 48, evidenceText: "Somewhere past the Silver Vale, the road turned north.", evidenceSource: "Chapter 48 · paragraph 9", proposedDesc: "A location mentioned once. No context given.", state: "pending" },
+  { id: 106, entityId: 6,  chapter: 48, evidenceText: "Captain Ren nodded from the gate.",                     evidenceSource: "Chapter 48 · paragraph 11", proposedDesc: "A minor guard in the background.", state: "pending" },
+  { id: 107, entityId: 7,  chapter: 48, evidenceText: "They had taken the Old Road out of Moonfall.",           evidenceSource: "Chapter 48 · paragraph 2", proposedDesc: "Referenced in passing.", state: "pending" },
+  { id: 108, entityId: 8,  chapter: 48, evidenceText: "Lyra had warned them both.",                            evidenceSource: "Chapter 48 · paragraph 8", proposedDesc: "Scholar. Warned about the Seven Seals.", state: "pending" },
+  { id: 109, entityId: 9,  chapter: 48, evidenceText: "Auren stood at the edge of Moonfall, watching the Ashen Coast.", evidenceSource: "Chapter 48 · paragraph 2", proposedDesc: "East of Moonfall.", state: "pending" },
+  { id: 110, entityId: 10, chapter: 48, evidenceText: "But the Moon King's shadow had already fallen.",        evidenceSource: "Chapter 48 · paragraph 8", proposedDesc: "A legendary ruler.", state: "pending" },
+  { id: 111, entityId: 11, chapter: 48, evidenceText: "Auren entered the Seventh Shrine carrying Moonsteel.", evidenceSource: "Chapter 48 · paragraph 3", proposedDesc: "Ancient shrine associated with the Moon King. Contains the Seven Seals.", state: "pending" },
+  { id: 112, entityId: 12, chapter: 48, evidenceText: "She had not slept in three days.",                     evidenceSource: "Chapter 48 · paragraph 3", proposedDesc: "Auren disappeared after entering the Seventh Shrine.", state: "pending" },
+  { id: 113, entityId: 13, chapter: 48, evidenceText: "The Moonsteel blade felt heavier than it should.",      evidenceSource: "Chapter 48 · paragraph 2", proposedDesc: "A blade made of Moonsteel.", state: "pending" },
+  { id: 114, entityId: 14, chapter: 48, evidenceText: "Moonsteel — the metal from the Shrine.",                evidenceSource: "Chapter 48 · paragraph 10", proposedDesc: "A rare metal from the Seventh Shrine.", state: "pending" },
+  { id: 115, entityId: 15, chapter: 48, evidenceText: "Its seven seals unbroken.",                             evidenceSource: "Chapter 48 · paragraph 8", proposedDesc: "Seven seals guarding something within the Seventh Shrine.", state: "pending" },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let entities = JSON.parse(JSON.stringify(ENTITIES));
+let suggestions = JSON.parse(JSON.stringify(SUGGESTIONS));
+let stack = [];
+let startTime = Date.now();
+let previewChapter = 48;
+
+const $ = id => document.getElementById(id);
+
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2400); }
+function saveState(){ try { localStorage.setItem('review_v7', JSON.stringify({ entities, suggestions, stack, startTime })); } catch(e){} }
+
+function getEntity(id){ return entities.find(e => e.id === id); }
+function getSuggestion(id){ return suggestions.find(s => s.id === id); }
+
+// Snapshot for undo
+function snapshot(){ return JSON.parse(JSON.stringify({ entities, suggestions })); }
+
+function pushUndo(label){
+  stack.push({ label, snap: snapshot() });
+}
+
+function undo(){
+  if (stack.length === 0) return;
+  const last = stack.pop();
+  const s = last.snap;
+  entities = s.entities;
+  suggestions = s.suggestions;
+  renderAll();
+  toast('Undid: ' + last.label);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderAll(){
+  renderCards();
+  updateProgress();
+  updateSuppressedCount();
+  updateUndoBar();
+}
+
+function renderCards(){
+  const container = $('cards');
+  container.innerHTML = '';
+  suggestions.forEach(sug => {
+    const entity = getEntity(sug.entityId);
+    const card = document.createElement('div');
+    card.className = 'card ' + (sug.state !== 'pending' ? 'completed ' + sug.state : '');
+    card.id = 'card-' + sug.id;
+
+    // Section: evidence
+    const evidenceHtml =
+      '<div class="section">' +
+        '<div class="section-label">Why this appeared</div>' +
+        '<div class="evidence">' + escapeHtml(sug.evidenceText) +
+          '<span class="source">' + escapeHtml(sug.evidenceSource) + '</span>' +
+        '</div>' +
+      '</div>';
+
+    // Section: matches existing entity
+    const matchHtml =
+      '<div class="section">' +
+        '<div class="section-label">Existing entity</div>' +
+        '<div class="match-row">' +
+          '<div>' +
+            '<div class="match-name">' + entity.icon + ' ' + escapeHtml(entity.name) + '</div>' +
+            '<div class="match-meta">' + entity.type + ' · First mentioned Ch. ' + entity.firstMentioned + '</div>' +
+          '</div>' +
+          '<div class="match-meta">' + (entity.canonState === 'canon' ? 'Canon ✓' : 'Draft') + '</div>' +
+        '</div>' +
+      '</div>';
+
+    // Section: proposed description
+    const isEdited = sug.state === 'edited';
+    const proposedHtml =
+      '<div class="section">' +
+        '<div class="section-label">Proposed description</div>' +
+        '<div class="proposed' + (isEdited ? ' mutated' : '') + '" id="desc-' + sug.id + '">' +
+          escapeHtml(sug.proposedDesc) +
+        '</div>' +
+      '</div>';
+
+    // Section: consequence preview
+    let consequenceHtml = '';
+    if (sug.state === 'pending' || sug.state === 'edited') {
+      consequenceHtml =
+        '<div class="section">' +
+          '<div class="section-label">If you accept</div>' +
+          '<div class="consequence">' +
+            '<div><span class="arrow">→</span>Evidence from Ch. 48 added to ' + escapeHtml(entity.name) + '</div>' +
+            '<div><span class="arrow">→</span>Entity description becomes the proposed description</div>' +
+            '<div><span class="arrow">→</span>Readers see it starting Chapter 48</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    // State panel (two separate cells — entity state, suggestion state)
+    const entityStateVal = entity.canonState === 'canon'
+      ? '<span class="yes">Canon ✓</span>'
+      : '<span class="pending">Draft</span>';
+    const revealVal = entity.revealChapter
+      ? 'Readers see it from Ch. ' + entity.revealChapter
+      : '<span class="pending">Not published to readers</span>';
+    const suggestionStateVal = {
+      pending: '<span class="pending">Pending</span>',
+      accepted: '<span class="yes">Accepted</span>',
+      edited: '<span class="yes">Accepted (edited)</span>',
+      merged: '<span class="later">Merged</span>',
+      deferred: '<span class="later">Deferred</span>',
+      rejected: '<span class="no">Rejected this appearance</span>',
+    }[sug.state] || '<span class="pending">Pending</span>';
+
+    const stateHtml =
+      '<div class="state-panel">' +
+        '<div class="state-cell">' +
+          '<span class="label">Entity state</span>' +
+          '<div class="val">' + entityStateVal + '<br>' + revealVal + '</div>' +
+        '</div>' +
+        '<div class="state-cell">' +
+          '<span class="label">This suggestion</span>' +
+          '<div class="val">' + suggestionStateVal + '</div>' +
+        '</div>' +
+      '</div>';
+
+    // Actions
+    const isDone = sug.state !== 'pending' && sug.state !== 'edited';
+    const actionsHtml =
+      '<div class="card-actions">' +
+        '<button class="btn primary" ' + (isDone ? 'disabled' : '') + ' onclick="action(\'accept\', ' + sug.id + ')">Accept</button>' +
+        '<button class="btn" ' + (isDone ? 'disabled' : '') + ' onclick="openEdit(' + sug.id + ')">Edit</button>' +
+        '<button class="btn" ' + (isDone ? 'disabled' : '') + ' onclick="openMerge(' + sug.id + ')">Merge</button>' +
+        '<button class="btn" ' + (isDone ? 'disabled' : '') + ' onclick="openDefer(' + sug.id + ')">Defer</button>' +
+        '<button class="btn muted" ' + (isDone ? 'disabled' : '') + ' onclick="action(\'reject\', ' + sug.id + ')">Reject this appearance</button>' +
+        '<button class="btn danger" ' + (isDone ? 'disabled' : '') + ' onclick="action(\'suppress\', ' + sug.id + ')">Suppress ' + escapeHtml(entity.name) + '</button>' +
+      '</div>';
+
+    // Panels
+    const editPanel =
+      '<div class="panel" id="edit-panel-' + sug.id + '">' +
+        '<label class="panel-label">New description for ' + escapeHtml(entity.name) + '</label>' +
+        '<textarea id="edit-ta-' + sug.id + '">' + escapeHtml(sug.proposedDesc) + '</textarea>' +
+        '<div class="panel-row">' +
+          '<button class="btn primary" onclick="saveEdit(' + sug.id + ')">Save and accept</button>' +
+          '<button class="btn muted" onclick="closePanels(' + sug.id + ')">Cancel</button>' +
+        '</div>' +
+      '</div>';
+
+    const mergePanel =
+      '<div class="panel" id="merge-panel-' + sug.id + '">' +
+        '<label class="panel-label">Merge into which entity?</label>' +
+        '<div class="merge-picker" id="merge-picker-' + sug.id + '"></div>' +
+        '<div id="merge-compare-' + sug.id + '"></div>' +
+      '</div>';
+
+    const deferPanel =
+      '<div class="panel" id="defer-panel-' + sug.id + '">' +
+        '<label class="panel-label">Defer this suggestion</label>' +
+        '<div class="defer-options">' +
+          '<label class="defer-option">' +
+            '<input type="radio" name="defer-' + sug.id + '" value="chapter">' +
+            '<div>' +
+              '<div class="title">Decide later</div>' +
+              '<div class="desc">Moves this suggestion back to pending. Ask again when you next review.</div>' +
+            '</div>' +
+          '</label>' +
+          '<label class="defer-option">' +
+            '<input type="radio" name="defer-' + sug.id + '" value="evidence">' +
+            '<div>' +
+              '<div class="title">Wait for more evidence</div>' +
+              '<div class="desc">Skip for now. Ask again when another chapter mentions ' + escapeHtml(entity.name) + '.</div>' +
+            '</div>' +
+          '</label>' +
+        '</div>' +
+        '<div class="panel-row">' +
+          '<button class="btn primary" onclick="saveDefer(' + sug.id + ')">Defer</button>' +
+          '<button class="btn muted" onclick="closePanels(' + sug.id + ')">Cancel</button>' +
+        '</div>' +
+      '</div>';
+
+    card.innerHTML =
+      '<div class="card-head">' +
+        '<div class="card-title-row">' +
+          '<div>' +
+            '<div class="card-name">' + entity.icon + ' ' + escapeHtml(entity.name) + '</div>' +
+            '<div class="card-meta">' + entity.type + ' · Suggestion from Chapter ' + sug.chapter + '</div>' +
+          '</div>' +
+          '<div class="card-source">Ch. ' + sug.chapter + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        evidenceHtml +
+        matchHtml +
+        proposedHtml +
+        consequenceHtml +
+      '</div>' +
+      stateHtml +
+      actionsHtml +
+      editPanel +
+      mergePanel +
+      deferPanel;
+
+    container.appendChild(card);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function action(type, sugId){
+  const sug = getSuggestion(sugId);
+  const entity = getEntity(sug.entityId);
+  if (!sug || sug.state !== 'pending') return;
+
+  if (type === 'accept'){
+    pushUndo('Accepted "' + entity.name + '"');
+    entity.canonDesc = sug.proposedDesc;
+    entity.canonState = 'canon';
+    entity.revealChapter = sug.chapter;
+    sug.state = 'accepted';
+    toast('Accepted "' + entity.name + '". It is now canon, revealed from Chapter ' + sug.chapter + '.');
+  }
+  else if (type === 'reject'){
+    pushUndo('Rejected "' + entity.name + '" appearance');
+    sug.state = 'rejected';
+    toast('Rejected this appearance. The entity itself was not changed.');
+  }
+  else if (type === 'suppress'){
+    pushUndo('Suppressed "' + entity.name + '"');
+    entity.suppressed = true;
+    sug.state = 'rejected';
+    toast('Suppressed "' + entity.name + '". Future suggestions for this entity will be hidden.');
+  }
+
+  renderAll();
+  saveState();
+}
+
+function openEdit(sugId){
+  closePanels(sugId);
+  $('edit-panel-' + sugId).classList.add('visible');
+}
+
+function saveEdit(sugId){
+  const sug = getSuggestion(sugId);
+  const entity = getEntity(sug.entityId);
+  const ta = $('edit-ta-' + sugId);
+  const newDesc = ta.value.trim();
+  if (!newDesc) return;
+
+  pushUndo('Edited and accepted "' + entity.name + '"');
+  sug.proposedDesc = newDesc;
+  sug.state = 'edited';
+  entity.canonDesc = newDesc;
+  entity.canonState = 'canon';
+  entity.revealChapter = sug.chapter;
+  toast('Saved. "' + entity.name + '" is canon with your edited description.');
+  renderAll();
+  saveState();
+}
+
+function openMerge(sugId){
+  closePanels(sugId);
+  const sug = getSuggestion(sugId);
+  const panel = $('merge-panel-' + sugId);
+  panel.classList.add('visible');
+  const picker = $('merge-picker-' + sugId);
+  picker.innerHTML = '';
+
+  // Candidates: all entities except this one, that are canon (or draft that already exist)
+  const candidates = entities.filter(e => e.id !== sug.entityId);
+  candidates.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'merge-candidate';
+    btn.textContent = c.icon + ' ' + c.name + ' · ' + c.type + (c.canonState === 'canon' ? ' · Canon ✓' : '');
+    btn.onclick = () => showMergeCompare(sugId, c.id);
+    picker.appendChild(btn);
+  });
+}
+
+function showMergeCompare(sugId, targetId){
+  const sug = getSuggestion(sugId);
+  const source = getEntity(sug.entityId);
+  const target = getEntity(targetId);
+  const container = $('merge-compare-' + sugId);
+
+  const sourceDesc = sug.proposedDesc;
+  const targetDesc = target.canonDesc;
+
+  container.innerHTML =
+    '<div class="merge-compare">' +
+      '<div class="merge-side">' +
+        '<label>Source: ' + escapeHtml(source.name) + '</label>' +
+        '<p>' + escapeHtml(sourceDesc) + '</p>' +
+      '</div>' +
+      '<div class="merge-side">' +
+        '<label>Target: ' + escapeHtml(target.name) + '</label>' +
+        '<p>' + escapeHtml(targetDesc) + '</p>' +
+      '</div>' +
+    '</div>' +
+    '<label class="panel-label">Result on ' + escapeHtml(target.name) + '</label>' +
+    '<div class="merge-choice-row">' +
+      '<button class="btn" onclick="confirmMerge(' + sugId + ', ' + targetId + ', \'keep-target\')">Keep target description</button>' +
+      '<button class="btn" onclick="confirmMerge(' + sugId + ', ' + targetId + ', \'use-source\')">Use source description</button>' +
+      '<button class="btn" onclick="confirmMerge(' + sugId + ', ' + targetId + ', \'edit\')">Write combined…</button>' +
+    '</div>' +
+    '<div class="panel-row"><button class="btn muted" onclick="closePanels(' + sugId + ')">Cancel</button></div>';
+}
+
+function confirmMerge(sugId, targetId, mode){
+  const sug = getSuggestion(sugId);
+  const source = getEntity(sug.entityId);
+  const target = getEntity(targetId);
+
+  if (mode === 'edit'){
+    const draft = target.canonDesc.replace(/\.\s*$/, '') + '. ' + sug.proposedDesc.charAt(0).toUpperCase() + sug.proposedDesc.slice(1);
+    const container = $('merge-compare-' + sugId);
+    container.innerHTML =
+      '<label class="panel-label">Combined description for ' + escapeHtml(target.name) + '</label>' +
+      '<textarea id="merge-ta-' + sugId + '">' + escapeHtml(draft) + '</textarea>' +
+      '<div class="panel-row">' +
+        '<button class="btn primary" onclick="confirmMergeFinal(' + sugId + ', ' + targetId + ')">Save combined</button>' +
+        '<button class="btn muted" onclick="closePanels(' + sugId + ')">Cancel</button>' +
+      '</div>';
+    return;
+  }
+
+  pushUndo('Merged "' + source.name + '" into "' + target.name + '"');
+
+  if (mode === 'use-source'){
+    target.canonDesc = sug.proposedDesc;
+  }
+  // keep-target: do nothing to target desc
+
+  if (target.canonState !== 'canon'){
+    target.canonState = 'canon';
+    target.revealChapter = sug.chapter;
+  }
+
+  sug.state = 'merged';
+  toast('Merged "' + source.name + '" into "' + target.name + '". The source stays as an alias.');
+  renderAll();
+  saveState();
+}
+
+function confirmMergeFinal(sugId, targetId){
+  const ta = $('merge-ta-' + sugId);
+  const finalDesc = ta.value.trim();
+  if (!finalDesc) return;
+  const sug = getSuggestion(sugId);
+  const source = getEntity(sug.entityId);
+  const target = getEntity(targetId);
+
+  pushUndo('Merged "' + source.name + '" into "' + target.name + '"');
+  target.canonDesc = finalDesc;
+  if (target.canonState !== 'canon'){
+    target.canonState = 'canon';
+    target.revealChapter = sug.chapter;
+  }
+  sug.state = 'merged';
+  toast('Merged "' + source.name + '" into "' + target.name + '".');
+  renderAll();
+  saveState();
+}
+
+function openDefer(sugId){
+  closePanels(sugId);
+  $('defer-panel-' + sugId).classList.add('visible');
+}
+
+function saveDefer(sugId){
+  const sug = getSuggestion(sugId);
+  const entity = getEntity(sug.entityId);
+  const sel = document.querySelector('input[name="defer-' + sugId + '"]:checked');
+  if (!sel) return;
+  pushUndo('Deferred "' + entity.name + '"');
+  sug.state = 'deferred';
+  toast('Deferred. We\'ll ask again ' + (sel.value === 'chapter' ? 'next review.' : 'when another chapter mentions this.'));
+  renderAll();
+  saveState();
+}
+
+function closePanels(sugId){
+  ['edit', 'merge', 'defer'].forEach(p => {
+    const el = $('panel-' + p + '-' + sugId);
+    if (el) el.classList.remove('visible');
+    // Also close the actual panel (different id structure)
+    const el2 = document.getElementById(p + '-panel-' + sugId);
+    if (el2) el2.classList.remove('visible');
+  });
+}
+
+// ============================================================
+// PROGRESS / STATE
+// ============================================================
+function updateProgress(){
+  const resolved = suggestions.filter(s => s.state !== 'pending').length;
+  $('progress').textContent = resolved + ' / ' + suggestions.length;
+  if (resolved === suggestions.length) $('finish-panel').classList.add('visible');
+  else $('finish-panel').classList.remove('visible');
+}
+
+function updateSuppressedCount(){
+  const n = entities.filter(e => e.suppressed).length;
+  $('suppressed-count').textContent = n;
+}
+
+function updateUndoBar(){
+  const bar = $('undo-bar');
+  const text = $('undo-bar-text');
+  if (stack.length === 0){ bar.classList.remove('visible'); return; }
+  const last = stack[stack.length-1];
+  text.innerHTML = 'Last: <strong>' + escapeHtml(last.label) + '</strong>';
+  bar.classList.add('visible');
+}
+
+// ============================================================
+// SUPPRESSED VIEW
+// ============================================================
+function showSuppressed(){
+  $('review-view').style.display = 'none';
+  $('reader-view').classList.remove('visible');
+  $('suppressed-view').classList.add('visible');
+  renderSuppressed();
+}
+
+function renderSuppressed(){
+  const container = $('suppressed-list');
+  const list = entities.filter(e => e.suppressed);
+  if (list.length === 0){
+    container.innerHTML = '<div class="empty-ignored">Nothing suppressed yet.</div>';
+    return;
+  }
+  container.innerHTML = '';
+  list.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'ignored-row';
+    row.innerHTML =
+      '<div class="ignored-info">' +
+        '<div class="ignored-name">' + e.icon + ' ' + escapeHtml(e.name) + '</div>' +
+        '<div class="ignored-meta">' + e.type + ' · Still canon, but hidden from future suggestions</div>' +
+      '</div>' +
+      '<button class="restore-btn" onclick="restoreSuppressed(' + e.id + ')">Unsuppress</button>';
+    container.appendChild(row);
+  });
+}
+
+function restoreSuppressed(id){
+  const e = getEntity(id);
+  pushUndo('Unsuppressed "' + e.name + '"');
+  e.suppressed = false;
+  renderAll();
+  renderSuppressed();
+  toast('Unsuppressed "' + e.name + '".');
+  saveState();
+}
+
+// ============================================================
+// READER PREVIEW
+// ============================================================
+function showReaderPreview(){
+  $('review-view').style.display = 'none';
+  $('suppressed-view').classList.remove('visible');
+  $('reader-view').classList.add('visible');
+  setPreviewChapter(48);
+}
+
+function setPreviewChapter(ch){
+  previewChapter = ch;
+  $('ch-48-btn').classList.toggle('active', ch === 48);
+  $('ch-60-btn').classList.toggle('active', ch === 60);
+  $('reader-subtitle').textContent = 'Reader at Chapter ' + ch;
+  renderPreview();
+}
+
+// TWO different chapter texts (real content simulation)
+const CHAPTER_TEXTS = {
+  48: {
+    title: "The Seventh Shrine",
+    paragraphs: [
+      "Auren stood at the edge of Moonfall, watching the Ashen Coast. The Moonsteel blade felt heavier than it should.",
+      '"You shouldn\'t have come," said Kael. He did not look at her.',
+      "Lyra had warned them both. But the Moon King's shadow had already fallen."
+    ]
+  },
+  60: {
+    title: "The Seals Break",
+    paragraphs: [
+      "The Seventh Shrine opened at dusk. Auren had not expected the Seven Seals to give way.",
+      "Kael followed her down. Above, the Ashen Coast lay still.",
+      "Lyra met them at the threshold. \"You know what this means,\" she said."
+    ]
+  }
+};
+
+function renderPreview(){
+  // Reset chapters — chapter 48 reveals 48, chapter 60 reveals 60
+  // For simplicity: entities with revealChapter <= previewChapter are visible
+  const text = CHAPTER_TEXTS[previewChapter];
+  $('reader-title').textContent = text.title;
+
+  // Build visible entities for this reader chapter
+  const visible = entities.filter(e => {
+    if (e.suppressed) return false;
+    if (e.canonState !== 'canon') return false;
+    if (!e.revealChapter) return false;
+    return e.revealChapter <= previewChapter;
+  });
+
+  // Show stub for scheduled entities that are canonical but reveal later
+  const stubs = entities.filter(e => {
+    if (e.suppressed) return false;
+    if (e.canonState !== 'canon') return false;
+    if (!e.revealChapter) return false;
+    return e.revealChapter > previewChapter;
+  });
+
+  const body = $('reader-body');
+  body.innerHTML = '';
+
+  // Sort entity names by length descending so longer names match first
+  const sortedVisible = [...visible].sort((a,b) => b.name.length - a.name.length);
+  const sortedStubs = [...stubs].sort((a,b) => b.name.length - a.name.length);
+
+  text.paragraphs.forEach(par => {
+    let html = escapeHtml(par);
+    // Stubs first
+    sortedStubs.forEach(e => {
+      const re = new RegExp('\\b' + escapeRegex(e.name) + '\\b', 'g');
+      html = html.replace(re, '<span class="entity-link stub" onclick="openReaderCard(' + e.id + ')">' + e.name + '</span>');
+    });
+    // Then visible
+    sortedVisible.forEach(e => {
+      const re = new RegExp('\\b' + escapeRegex(e.name) + '\\b', 'g');
+      html = html.replace(re, '<span class="entity-link" onclick="openReaderCard(' + e.id + ')">' + e.name + '</span>');
+    });
+    const p = document.createElement('p');
+    p.innerHTML = html;
+    body.appendChild(p);
+  });
+
+  const note = $('reader-note');
+  const visibleNames = visible.map(e => e.name);
+  const stubNames = stubs.map(e => e.name + ' (reveal Ch. ' + e.revealChapter + ')');
+  note.innerHTML =
+    '<span class="diag-label">Creator preview diagnostics</span><br>' +
+    '<strong>Reader can see:</strong> ' + (visibleNames.length ? visibleNames.join(', ') : 'none') + '<br>' +
+    '<strong>Reader sees as stub (not yet revealed):</strong> ' + (stubNames.length ? stubNames.join(', ') : 'none');
+}
+
+function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function openReaderCard(id){
+  const e = getEntity(id);
+  if (!e) return;
+  const isStub = e.revealChapter && e.revealChapter > previewChapter;
+
+  $('rc-icon').textContent = e.icon;
+  $('rc-name').textContent = e.name;
+  $('rc-type').textContent = e.type;
+
+  const card = $('reader-card');
+  if (isStub){
+    card.classList.add('stub-card');
+    $('rc-summary').style.display = 'none';
+    $('rc-stub-text').style.display = 'block';
+    $('rc-stub-text').textContent = "You haven't discovered this yet.";
+    $('rc-meta').textContent = 'Reader at Chapter ' + previewChapter;
+  } else {
+    card.classList.remove('stub-card');
+    $('rc-summary').style.display = 'block';
+    $('rc-stub-text').style.display = 'none';
+    $('rc-summary').textContent = e.canonDesc;
+    $('rc-meta').textContent = 'Reader at Chapter ' + previewChapter + ' · First mentioned in Chapter ' + e.firstMentioned;
+  }
+  $('reader-card-backdrop').classList.add('visible');
+}
+
+function closeReaderCard(){ $('reader-card-backdrop').classList.remove('visible'); }
+
+function backToReview(){
+  $('reader-view').classList.remove('visible');
+  $('suppressed-view').classList.remove('visible');
+  $('review-view').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Esc to close reader card
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeReaderCard();
+});
+
+// Click outside reader card
+document.addEventListener('DOMContentLoaded', () => {
+  const backdrop = $('reader-card-backdrop');
+  backdrop.addEventListener('click', e => {
+    if (e.target.id === 'reader-card-backdrop') closeReaderCard();
+  });
+});
+
+// Init
+renderAll();
+
+// Restore
+try {
+  const saved = JSON.parse(localStorage.getItem('review_v7') || 'null');
+  if (saved && saved.entities && saved.suggestions){
+    entities = saved.entities;
+    suggestions = saved.suggestions;
+    stack = saved.stack || [];
+    renderAll();
+  }
+} catch(e){}
+
+setInterval(saveState, 10000);
+window.addEventListener('beforeunload', saveState);
+
+window.__reviewV7 = { get entities(){ return entities; }, get suggestions(){ return suggestions; }, get stack(){ return stack; }, VERSION };
+console.log('Review v7 ready.');
+</script>
+
+</body>
+</html>
