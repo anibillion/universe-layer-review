@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Saltbound · Chapter 41 Review</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0d0d10; --surface:#16161c; --surface-2:#1e1e26; --surface-3:#252530;
+    --border:#2a2a35; --border-2:#3a3a48;
+    --text:#ece9e4; --text-dim:#a09a90; --text-muted:#6b665e;
+    --gold:#d4a95a; --gold-dim:#8a6f3a; --gold-glow:rgba(212,169,90,0.12);
+    --green:#6bbf7a; --red:#c96565; --blue:#6a9fd4; --purple:#a07cd4; --amber:#d4a95a;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(13,13,16,0.94);backdrop-filter:blur(10px);flex-wrap:wrap;gap:12px;}
+  .topbar-title{font-size:14px;font-weight:600;}
+  .topbar-sub{font-size:11px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;}
+  .topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .nav-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer;transition:all 0.15s;}
+  .nav-btn:hover{border-color:var(--gold-dim);color:var(--gold);}
+  .progress{font-family:ui-monospace,monospace;font-size:12px;color:var(--text-dim);}
+  .container{max-width:880px;margin:0 auto;padding:28px 24px 180px;}
+
+  /* Summary */
+  .summary{padding:20px 24px;background:linear-gradient(180deg,rgba(212,169,90,0.06),transparent);border:1px solid var(--gold-dim);border-radius:14px;margin-bottom:28px;}
+  .summary h2{font-family:Georgia,serif;font-weight:400;font-size:22px;margin-bottom:8px;}
+  .summary .sub{color:var(--text-dim);font-size:13px;margin-bottom:16px;}
+  .summary .counts{display:flex;gap:20px;flex-wrap:wrap;}
+  .summary .count{display:flex;flex-direction:column;gap:2px;}
+  .summary .count .n{font-family:ui-monospace,monospace;font-size:22px;font-weight:600;color:var(--gold);}
+  .summary .count .l{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;}
+  .summary .count.ambig .n{color:var(--amber);}
+  .summary .count.noise .n{color:var(--text-muted);}
+
+  /* Section header */
+  .section-h{margin:32px 0 14px;display:flex;align-items:baseline;gap:12px;}
+  .section-h h3{font-family:Georgia,serif;font-weight:400;font-size:19px;}
+  .section-h .meta{font-size:12px;color:var(--text-muted);font-family:ui-monospace,monospace;}
+  .section-h .rule{flex:1;height:1px;background:var(--border);margin-left:8px;}
+
+  /* Card */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden;transition:border-color 0.2s;}
+  .card.completed{opacity:0.72;}
+  .card.added{border-left:3px solid var(--green);}
+  .card.edited{border-left:3px solid var(--gold);}
+  .card.held{border-left:3px solid var(--amber);}
+  .card.skipped{border-left:3px solid var(--text-muted);}
+  .card.suppressed{border-left:3px solid var(--red);}
+  .card.grouped{border-left:3px solid var(--purple);}
+
+  .card-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);}
+  .card-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:4px;}
+  .card-name{font-size:17px;font-weight:600;line-height:1.3;}
+  .card-meta{font-size:12px;color:var(--text-muted);}
+  .card-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .badge{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid var(--border-2);color:var(--text-muted);}
+  .badge.matched{color:var(--blue);border-color:rgba(106,159,212,0.4);background:rgba(106,159,212,0.08);}
+  .badge.new{color:var(--green);border-color:rgba(107,191,122,0.4);background:rgba(107,191,122,0.08);}
+  .badge.rich{color:var(--gold);border-color:rgba(212,169,90,0.4);background:var(--gold-glow);}
+  .badge.draft{color:var(--amber);border-color:rgba(212,169,90,0.35);}
+  .badge.confident{color:var(--green);border-color:rgba(107,191,122,0.3);}
+  .badge.ambiguous{color:var(--amber);border-color:rgba(212,169,90,0.3);}
+
+  .card-body{padding:16px 20px;}
+  .section-label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+  .section{margin-bottom:16px;}
+  .section:last-child{margin-bottom:0;}
+
+  .evidence{font-family:Georgia,serif;font-size:14px;line-height:1.6;color:var(--text-dim);padding:12px 14px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--border-2);margin-bottom:8px;}
+  .evidence:last-child{margin-bottom:0;}
+  .evidence .source{display:block;margin-top:6px;font-size:11px;color:var(--text-muted);font-family:ui-monospace,monospace;font-style:normal;}
+
+  .existing{font-family:Georgia,serif;font-size:14px;line-height:1.6;color:var(--text);padding:12px 14px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--blue);}
+  .existing .label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px;font-family:system-ui;}
+
+  .related{padding:12px 14px;background:rgba(160,124,212,0.05);border:1px solid rgba(160,124,212,0.2);border-radius:8px;font-size:13px;color:var(--text-dim);line-height:1.6;}
+  .related .rel-name{color:var(--purple);font-weight:500;}
+
+  .reveal-flag{padding:12px 14px;background:rgba(212,169,90,0.08);border:1px solid rgba(212,169,90,0.3);border-radius:8px;font-size:13px;color:var(--text);line-height:1.6;}
+  .reveal-flag .rf-label{font-size:10px;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px;}
+
+  .consequence{padding:12px 14px;background:rgba(107,191,122,0.05);border:1px solid rgba(107,191,122,0.2);border-radius:8px;font-size:12px;color:var(--text-dim);line-height:1.7;}
+  .consequence .arrow{color:var(--green);font-weight:700;margin-right:6px;}
+
+  /* Noise row */
+  .noise-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;gap:12px;}
+  .noise-row .noise-name{font-size:13px;color:var(--text);font-weight:500;}
+  .noise-row .noise-reason{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .noise-row .noise-actions{display:flex;gap:6px;}
+  .noise-row.dismissed{opacity:0.5;}
+  .noise-row.promoted{border-color:var(--green);}
+
+  /* State panel */
+  .state-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 20px;background:var(--surface-2);border-top:1px solid var(--border);}
+  .state-cell{font-size:12px;}
+  .state-cell .label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;}
+  .state-cell .val{font-family:ui-monospace,monospace;font-size:12px;color:var(--text);}
+  .state-cell .val .yes{color:var(--green);}
+  .state-cell .val .no{color:var(--red);}
+  .state-cell .val .later{color:var(--blue);}
+  .state-cell .val .pending{color:var(--text-muted);}
+
+  .card-actions{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;background:var(--surface);}
+  .btn{font-family:inherit;font-size:12px;font-weight:500;padding:7px 14px;border-radius:7px;cursor:pointer;transition:all 0.15s;border:1px solid var(--border);background:var(--surface-2);color:var(--text);}
+  .btn:hover:not(:disabled){border-color:var(--text-dim);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn.primary{background:var(--gold-glow);border-color:var(--gold-dim);color:var(--gold);}
+  .btn.primary:hover:not(:disabled){background:rgba(212,169,90,0.22);border-color:var(--gold);}
+  .btn.danger{background:rgba(201,101,101,0.08);border-color:rgba(201,101,101,0.3);color:var(--red);}
+  .btn.danger:hover:not(:disabled){background:rgba(201,101,101,0.18);border-color:var(--red);}
+  .btn.muted{color:var(--text-muted);}
+  .btn.muted:hover:not(:disabled){border-color:var(--text-muted);color:var(--text);}
+  .btn.hold{background:rgba(212,169,90,0.08);border-color:rgba(212,169,90,0.3);color:var(--gold);}
+  .btn.hold:hover:not(:disabled){background:rgba(212,169,90,0.18);border-color:var(--gold);}
+
+  /* Panels */
+  .panel{display:none;padding:16px 20px;background:var(--surface-2);border-top:1px solid var(--border);}
+  .panel.visible{display:block;}
+  .panel-label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;}
+  .panel textarea{width:100%;min-height:80px;padding:10px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:Georgia,serif;font-size:14px;line-height:1.6;resize:vertical;outline:none;}
+  .panel textarea:focus{border-color:var(--gold);}
+  .panel input[type=number]{width:100px;padding:8px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;outline:none;}
+  .panel-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+
+  /* Finish */
+  .finish-panel{margin-top:28px;padding:28px;background:var(--surface);border:1px solid var(--gold-dim);border-radius:14px;text-align:center;display:none;}
+  .finish-panel.visible{display:block;}
+  .finish-panel h2{font-family:Georgia,serif;font-weight:400;font-size:24px;margin-bottom:10px;}
+  .finish-panel p{color:var(--text-dim);font-size:13px;margin-bottom:16px;}
+  .finish-btn{background:var(--gold-glow);border:1px solid var(--gold);color:var(--gold);font-family:inherit;font-size:14px;font-weight:500;padding:12px 28px;border-radius:10px;cursor:pointer;transition:all 0.15s;}
+  .finish-btn:hover{background:rgba(212,169,90,0.22);}
+
+  /* Views */
+  #reader-view,#suppressed-view{display:none;}
+  #reader-view.visible,#suppressed-view.visible{display:block;}
+  .back-link{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;margin-bottom:24px;transition:all 0.15s;}
+  .back-link:hover{border-color:var(--gold-dim);color:var(--gold);}
+
+  .preview-controls{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;}
+  .preview-controls label{font-size:12px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;}
+  .preview-controls button{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:13px;padding:7px 14px;border-radius:7px;cursor:pointer;transition:all 0.15s;}
+  .preview-controls button.active{background:var(--gold-glow);border-color:var(--gold);color:var(--gold);font-weight:600;}
+
+  .reader-header{padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:28px;}
+  .reader-header h1{font-family:Georgia,serif;font-weight:400;font-size:30px;margin-bottom:6px;}
+  .reader-header p{color:var(--text-dim);font-size:13px;}
+  .reader-body{font-family:Georgia,serif;font-size:18px;line-height:1.85;color:#ded9d1;}
+  .reader-body p{margin-bottom:22px;}
+  .entity-link{color:var(--gold);border-bottom:1px dotted rgba(212,169,90,0.5);cursor:pointer;padding:0 1px;transition:background 0.15s;}
+  .entity-link:hover{background:var(--gold-glow);}
+  .entity-link.stub{color:var(--text-muted);border-bottom-color:var(--border-2);}
+
+  /* Reader card */
+  #reader-card-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.22s;z-index:100;}
+  #reader-card-backdrop.visible{opacity:1;pointer-events:auto;}
+  #reader-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:500px;width:100%;max-height:82vh;overflow-y:auto;padding:28px;transform:translateY(16px) scale(0.98);transition:transform 0.22s;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
+  #reader-card-backdrop.visible #reader-card{transform:translateY(0) scale(1);}
+  #reader-card.stub-card{border-style:dashed;border-color:var(--border-2);}
+  .rc-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;}
+  .rc-icon{font-size:26px;line-height:1;padding-top:4px;}
+  .rc-title-block{flex:1;}
+  .rc-type{font-size:10px;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:4px;font-weight:600;}
+  .rc-name{font-family:Georgia,serif;font-size:22px;font-weight:400;line-height:1.2;}
+  .rc-close{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;font-family:inherit;}
+  .rc-close:hover{color:var(--text);}
+  .rc-summary{font-family:Georgia,serif;font-size:15px;line-height:1.6;color:var(--text-dim);margin-bottom:18px;}
+  .rc-stub-text{font-family:Georgia,serif;font-size:15px;line-height:1.6;color:var(--text-muted);font-style:italic;margin-bottom:18px;}
+  .rc-meta{font-size:12px;color:var(--text-muted);padding-top:14px;border-top:1px solid var(--border);}
+
+  .reader-note{margin-top:32px;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--text-dim);line-height:1.7;}
+  .reader-note strong{color:var(--text);}
+  .reader-note .diag-label{display:inline-block;font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+
+  #undo-bar{position:fixed;bottom:0;left:0;right:0;padding:10px 24px;background:rgba(22,22,28,0.98);border-top:1px solid var(--border-2);display:none;justify-content:space-between;align-items:center;gap:16px;z-index:80;backdrop-filter:blur(10px);}
+  #undo-bar.visible{display:flex;}
+  #undo-bar-text{font-size:12px;color:var(--text-dim);flex:1;}
+  #undo-bar-text strong{color:var(--text);}
+  #undo-bar button{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12px;padding:7px 16px;border-radius:7px;cursor:pointer;transition:all 0.15s;font-weight:500;}
+  #undo-bar button:hover{border-color:var(--gold);color:var(--gold);}
+
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);padding:11px 22px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all 0.2s;z-index:200;box-shadow:0 12px 32px rgba(0,0,0,0.5);max-width:560px;}
+  .toast.visible{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:600px){
+    .state-panel{grid-template-columns:1fr;}
+    .container{padding:20px 16px 180px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">The Saltbound · Chapter 41</div>
+    <div class="topbar-sub">The Salt Road · Review</div>
+  </div>
+  <div class="topbar-right">
+    <div class="progress" id="progress">0 / 11</div>
+  </div>
+</div>
+
+<div class="container" id="review-view">
+  <div class="summary">
+    <h2>Extraction from Chapter 41 — The Salt Road</h2>
+    <div class="sub">Every mention is shown with its source sentence. Match status is shown against your existing canon. Reveal holds are flagged. Noise is separated.</div>
+    <div class="counts">
+      <div class="count"><span class="n" id="count-confident">0</span><span class="l">Confident</span></div>
+      <div class="count ambig"><span class="n" id="count-ambiguous">0</span><span class="l">Ambiguous</span></div>
+      <div class="count noise"><span class="n" id="count-noise">0</span><span class="l">Noise</span></div>
+      <div class="count"><span class="n" id="count-holds">0</span><span class="l">Reveal holds</span></div>
+    </div>
+  </div>
+
+  <div class="section-h">
+    <h3>Confident</h3>
+    <span class="meta">recurring entities · likely already in canon</span>
+    <span class="rule"></span>
+  </div>
+  <div id="confident-list"></div>
+
+  <div class="section-h">
+    <h3>Ambiguous</h3>
+    <span class="meta">draft-state, uncertain, or related to existing entities</span>
+    <span class="rule"></span>
+  </div>
+  <div id="ambiguous-list"></div>
+
+  <div class="section-h">
+    <h3>Noise</h3>
+    <span class="meta">single mentions · generic geography · probably not entities</span>
+    <span class="rule"></span>
+  </div>
+  <div id="noise-list"></div>
+
+  <div class="finish-panel" id="finish-panel">
+    <h2>Review complete</h2>
+    <p>All entities resolved.</p>
+    <button class="finish-btn" onclick="showReaderPreview()">Preview as reader →</button>
+  </div>
+</div>
+
+<div class="container" id="reader-view">
+  <button class="back-link" onclick="backToReview()">← Back to review</button>
+  <div class="preview-controls">
+    <label>Reader at chapter:</label>
+    <button id="ch-41-btn" class="active" onclick="setPreviewChapter(41)">Chapter 41</button>
+    <button id="ch-60-btn" onclick="setPreviewChapter(60)">Chapter 60</button>
+  </div>
+  <div class="reader-header">
+    <h1 id="reader-title">The Salt Road</h1>
+    <p id="reader-subtitle">Reader at Chapter 41</p>
+  </div>
+  <div class="reader-body" id="reader-body"></div>
+  <div class="reader-note" id="reader-note"></div>
+</div>
+
+<div id="reader-card-backdrop">
+  <div id="reader-card">
+    <div class="rc-header">
+      <div class="rc-icon" id="rc-icon"></div>
+      <div class="rc-title-block">
+        <div class="rc-type" id="rc-type"></div>
+        <h2 class="rc-name" id="rc-name"></h2>
+      </div>
+      <button class="rc-close" onclick="closeReaderCard()">✕</button>
+    </div>
+    <p class="rc-summary" id="rc-summary"></p>
+    <p class="rc-stub-text" id="rc-stub-text" style="display:none;"></p>
+    <div class="rc-meta" id="rc-meta"></div>
+  </div>
+</div>
+
+<div id="undo-bar">
+  <div id="undo-bar-text"></div>
+  <button onclick="undo()">Undo</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   THE SALTBOUND · CHAPTER 41 — "The Salt Road"
+   Real content test for the Canon Review tool.
+   ============================================================ */
+
+const VERSION = 'v8';
+
+const CHAPTER = {
+  number: 41,
+  title: "The Salt Road",
+  paragraphs: [
+    "The mule died an hour before dawn, somewhere between Whitmouth and the Salt Road, which is to say: nowhere that had a name. Sera cut the traces, took the water skin, and left the body for the gulls. She had liked that mule. That was the problem with mules.",
+    "She walked the rest of the way.",
+    "By midday she reached the Drowned Chapel. It stood half in the tidal flats, half out, its bell tower leaning west like a man listening for something. The Order of the Tide had built it two hundred years ago, back when the Salt Road was still a road and not a suggestion. The chapel was empty now. It had been empty since the Sundering. But the doors were open, and Sera was tired, and there was no one left to tell her no.",
+    "Inside, someone had left a lamp burning.",
+    "That was the first wrong thing.",
+    "The second was the boy. He was sitting on the altar steps with his boots off, drying his feet, as if he'd walked the flats himself and hadn't just appeared in a place no living person had entered in seventeen years. He looked up when she came in. He did not look surprised.",
+    "\"You're Sera Vane,\" he said.",
+    "\"I am.\"",
+    "\"I'm supposed to give you this.\"",
+    "He held out a piece of paper, folded twice. The seal on it was the Meridian seal — a wave breaking over a tower. Sera had not seen that seal since the war. She took the paper. She did not open it. Not yet. You didn't open a Meridian letter in front of a stranger. You opened it in front of a fire, and then you burned it, and then you decided what to do with what you'd read.",
+    "\"Who gave this to you?\"",
+    "\"A woman. She said to tell you that the Corvid is still in port at Harrow's Reach. She said you'd know what that meant.\"",
+    "Sera did know what that meant. She wished she didn't.",
+    "The boy's name was Kell. He was fourteen, maybe. He had the flat accent of the inner isles, which meant he'd been raised on the water and not on the Road. He'd been traveling with the woman for three weeks. He didn't know her name. He didn't know where she'd gone. He knew only that she'd paid him in silver and told him to wait at the Drowned Chapel until Sera Vane came, and if Sera Vane didn't come within four days, to take the letter to the Tide-Watchers at Emberfall and let them decide what to do with it.",
+    "\"She said you'd come,\" Kell said. \"She seemed sure.\"",
+    "\"She was wrong.\"",
+    "\"She wasn't.\"",
+    "Sera looked at him for a long moment. Then she sat down on the steps beside him and took off her own boots, because her feet were bleeding and there was no point pretending otherwise.",
+    "They stayed the night in the chapel. Sera built a fire in the old brazier, the one the Tide-priests had used for their vigils, and she burned the letter after she'd read it. It said three things. It said that the Meridian Compact had been broken. It said that the Ashen Fleet had been seen off the Corvid coast, moving north. And it said that whoever had written this letter — no signature, no name, just the seal — wanted Sera to go to Harrow's Reach and speak to a man called Aldric Crane, who ran the harbor there and who had, apparently, been waiting for her for eleven years.",
+    "She did not know an Aldric Crane. That was the fourth wrong thing. She had known every Meridian officer by name. She had known them by their handwriting. She had known most of them by the sound of their boots on stone. There had been no Aldric Crane in the Meridian. Which meant either the letter was a forgery, or the Meridian had changed in ways she didn't understand, or — and this was the possibility that kept her awake — there had been an Aldric Crane all along, and she had simply never been told.",
+    "Kell slept through all of it. He slept like a boy who had never been hunted, which meant he had been, at some point, and had decided to sleep anyway. Sera sat up with her back against the altar and watched the tide come in through the broken floor. By midnight the water was ankle-deep in the nave. By two it was at the third step. The Drowned Chapel did what its name promised. That was why the Tide-priests had chosen it. The sea came in, and the sea went out, and whatever you'd left on the altar was either taken or given back, and either way you learned something.",
+    "Sera had left nothing on the altar. She wasn't sure if that was wisdom or cowardice.",
+    "In the morning, Kell asked her where they were going.",
+    "\"Harrow's Reach,\" she said.",
+    "\"To see the man?\"",
+    "\"To see the man.\"",
+    "\"Are you going to kill him?\"",
+    "Sera considered the question. She was not offended by it. It was a fair question, and fair questions deserved fair answers.",
+    "\"I don't know yet,\" she said. \"It depends on what he tells me.\"",
+    "They took the Salt Road north. It was not a good road. It had been a good road once — the Meridian had built it, and the Meridian had built everything to last — but seventeen years of tides and no maintenance had left it cracked and salt-bleached and, in three places, entirely submerged at high tide. They walked it at low tide. They slept on the high ground. On the second night they saw the lights of a ship moving south, far out, and Kell asked if it was the Corvid.",
+    "\"It's not the Corvid,\" Sera said.",
+    "\"How do you know?\"",
+    "\"Because the Corvid doesn't sail at night. It hasn't sailed at night since the Sundering.\"",
+    "Kell was quiet for a moment. Then he said, \"That's a strange thing to know about a ship.\"",
+    "\"Yes,\" Sera said. \"It is.\"",
+    "She did not tell him why she knew. She had not told anyone why she knew, not in eleven years. Aldric Crane, if he existed, would know. That was one of the things she intended to ask him.",
+    "They reached Harrow's Reach on the fourth day, which was sooner than she'd expected, which meant the Road was less ruined than she remembered, which meant the Meridian had been maintaining it, which meant the Meridian was still, in some form, alive. That was the fifth wrong thing. She had stopped counting at four. She was not sure why she'd started counting at all.",
+    "The town was small and salt-stained and busy in the way that only harbor towns can be busy — everything happening in the space of a hundred yards, and everything urgent. Sera left Kell at the inn with enough silver for a meal and instructions not to leave. Then she walked down to the harbor to find the Corvid.",
+    "She found it in the third berth, which was where it had always been. It was not a large ship. It had never been a large ship. But it was the only ship on the coast that had been built before the Sundering and had survived it, and that was why men came from three hundred miles to look at it, and that was why Sera had spent eleven years trying not to look at it, and that was why, standing on the pier in the late afternoon light, with the gulls overhead and the water black beneath her, she felt something she had not felt in a long time.",
+    "She felt like she was home.",
+    "That was the sixth wrong thing, and it was the one that frightened her most."
+  ]
+};
+
+/* ============================================================
+   ENTITIES — split into confident / ambiguous / noise
+   ============================================================ */
+const ENTITIES = [
+  // ============ CONFIDENT ============
+  {
+    id: 1, confidence: "confident",
+    name: "Sera Vane", type: "Character", icon: "⚔",
+    existing: true, firstMentioned: 1,
+    canonDesc: "Protagonist. Former Meridian officer. Knows more about the Corvid than she admits.",
+    existingRich: true, revealHold: null,
+    mentions: [
+      { sentence: "Sera cut the traces, took the water skin, and left the body for the gulls.", source: "Ch. 41 · para 1" },
+      { sentence: "\"You're Sera Vane,\" he said.", source: "Ch. 41 · para 7" },
+      { sentence: "Sera had not seen that seal since the war.", source: "Ch. 41 · para 10" }
+    ],
+    proposedDesc: "Sera Vane. Traveling north on the Salt Road toward Harrow's Reach."
+  },
+  {
+    id: 2, confidence: "confident",
+    name: "Kell", type: "Character", icon: "👤",
+    existing: false, firstMentioned: 41,
+    canonDesc: null,
+    existingRich: false, revealHold: null,
+    mentions: [
+      { sentence: "The boy's name was Kell. He was fourteen, maybe.", source: "Ch. 41 · para 14" },
+      { sentence: "Kell slept through all of it.", source: "Ch. 41 · para 19" }
+    ],
+    proposedDesc: "A boy of fourteen, flat inner-isles accent. Carried a Meridian letter to Sera on behalf of an unnamed woman."
+  },
+  {
+    id: 3, confidence: "confident",
+    name: "The Drowned Chapel", type: "Location", icon: "🏛",
+    existing: true, firstMentioned: 12,
+    canonDesc: "Half-submerged chapel on the tidal flats. Built by the Order of the Tide.",
+    existingRich: true, revealHold: null,
+    mentions: [
+      { sentence: "By midday she reached the Drowned Chapel.", source: "Ch. 41 · para 3" },
+      { sentence: "The Drowned Chapel did what its name promised.", source: "Ch. 41 · para 19" }
+    ],
+    proposedDesc: "An abandoned tidal chapel, half-submerged at high tide."
+  },
+  {
+    id: 4, confidence: "confident",
+    name: "The Salt Road", type: "Location", icon: "🛤",
+    existing: true, firstMentioned: 8,
+    canonDesc: "The coastal road between the inner isles and Harrow's Reach. Meridian-built.",
+    existingRich: true, revealHold: null,
+    mentions: [
+      { sentence: "somewhere between Whitmouth and the Salt Road, which is to say: nowhere that had a name.", source: "Ch. 41 · para 1" },
+      { sentence: "They took the Salt Road north.", source: "Ch. 41 · para 24" }
+    ],
+    proposedDesc: "The Meridian road along the tidal coast, north toward Harrow's Reach."
+  },
+  {
+    id: 5, confidence: "confident",
+    name: "Harrow's Reach", type: "Location", icon: "⚓",
+    existing: true, firstMentioned: 20,
+    canonDesc: "Harbor town. Sera's destination.",
+    existingRich: true, revealHold: null,
+    mentions: [
+      { sentence: "the Corvid is still in port at Harrow's Reach", source: "Ch. 41 · para 11" },
+      { sentence: "They reached Harrow's Reach on the fourth day", source: "Ch. 41 · para 30" }
+    ],
+    proposedDesc: "A harbor town. The Corvid is docked here."
+  },
+  {
+    id: 6, confidence: "confident",
+    name: "The Corvid", type: "Item", icon: "⛵",
+    existing: true, firstMentioned: 6,
+    canonDesc: "A ship. Survived the Sundering. Docked at Harrow's Reach.",
+    existingRich: true,
+    revealHold: { chapter: 58, note: "Sera's connection to the Corvid is a hold until Chapter 58. Do not surface Sera's relationship to this ship before then." },
+    mentions: [
+      { sentence: "the Corvid is still in port at Harrow's Reach", source: "Ch. 41 · para 11" },
+      { sentence: "She found it in the third berth, which was where it had always been.", source: "Ch. 41 · para 32" }
+    ],
+    proposedDesc: "A ship, docked at Harrow's Reach. Not seen in port since the Sundering."
+  },
+  {
+    id: 7, confidence: "confident",
+    name: "The Meridian", type: "Organization", icon: "🌊",
+    existing: true, firstMentioned: 2,
+    canonDesc: "The dissolved military order that built and maintained the coastal infrastructure. Author of the Meridian Compact.",
+    existingRich: true, revealHold: null,
+    relatedMentions: [
+      { name: "The Meridian Compact", kind: "Treaty", note: "mentioned as 'broken' in the letter" },
+      { name: "The Meridian seal", kind: "Symbol", note: "wave breaking over a tower" }
+    ],
+    mentions: [
+      { sentence: "the Meridian had built it, and the Meridian had built everything to last", source: "Ch. 41 · para 24" },
+      { sentence: "the Meridian had been maintaining it", source: "Ch. 41 · para 30" }
+    ],
+    proposedDesc: "The Meridian order. Still maintaining some infrastructure in secret."
+  },
+  {
+    id: 8, confidence: "confident",
+    name: "The Sundering", type: "Event", icon: "⚡",
+    existing: true, firstMentioned: 5,
+    canonDesc: "The cataclysm that ended the Meridian era. Seventeen years ago.",
+    existingRich: true,
+    revealHold: { chapter: 55, note: "The nature of the Sundering is a hold until Chapter 55. Show as a stub card to readers before that." },
+    mentions: [
+      { sentence: "It had been empty since the Sundering.", source: "Ch. 41 · para 3" },
+      { sentence: "It hasn't sailed at night since the Sundering.", source: "Ch. 41 · para 27" }
+    ],
+    proposedDesc: "The event that ended the Meridian era, seventeen years ago."
+  },
+
+  // ============ AMBIGUOUS ============
+  {
+    id: 9, confidence: "ambiguous",
+    name: "The Order of the Tide", type: "Organization", icon: "🌊",
+    existing: true, firstMentioned: 15,
+    canonDesc: "Religious order that built the Drowned Chapel.",
+    existingRich: false, revealHold: null,
+    mentions: [
+      { sentence: "The Order of the Tide had built it two hundred years ago", source: "Ch. 41 · para 3" }
+    ],
+    proposedDesc: "The religious order that built the Drowned Chapel."
+  },
+  {
+    id: 10, confidence: "ambiguous",
+    name: "Aldric Crane", type: "Character", icon: "👤",
+    existing: true, firstMentioned: null,
+    canonDesc: "A name in an unsigned letter. Runs the harbor at Harrow's Reach.",
+    existingRich: false,
+    revealHold: { chapter: null, note: "Aldric Crane's identity is unconfirmed. The letter implies he exists. Do not confirm to readers yet." },
+    mentions: [
+      { sentence: "a man called Aldric Crane, who ran the harbor there and who had, apparently, been waiting for her for eleven years.", source: "Ch. 41 · para 17" },
+      { sentence: "She did not know an Aldric Crane.", source: "Ch. 41 · para 18" }
+    ],
+    proposedDesc: "A man named in the letter. Runs the harbor at Harrow's Reach. Not known to Sera."
+  },
+  {
+    id: 11, confidence: "ambiguous",
+    name: "The Ashen Fleet", type: "Organization", icon: "🔥",
+    existing: true, firstMentioned: null,
+    canonDesc: "A fleet mentioned in the letter. May be rumor.",
+    existingRich: false, revealHold: null,
+    draftState: true,
+    mentions: [
+      { sentence: "the Ashen Fleet had been seen off the Corvid coast, moving north.", source: "Ch. 41 · para 17" }
+    ],
+    proposedDesc: "A fleet said to be moving north along the coast. Unconfirmed."
+  },
+
+  // ============ RELATED / NEAR-DUPLICATE ============
+  {
+    id: 12, confidence: "ambiguous",
+    name: "The Meridian Compact", type: "Concept", icon: "📜",
+    existing: true, firstMentioned: null,
+    canonDesc: "The treaty that bound the Meridian. Now broken.",
+    existingRich: false, revealHold: null,
+    parentGroup: "The Meridian",
+    mentions: [
+      { sentence: "It said that the Meridian Compact had been broken.", source: "Ch. 41 · para 17" }
+    ],
+    proposedDesc: "The Meridian treaty. Broken by an unknown party."
+  },
+  {
+    id: 13, confidence: "ambiguous",
+    name: "The Meridian seal", type: "Object", icon: "🔱",
+    existing: true, firstMentioned: null,
+    canonDesc: "A wave breaking over a tower. The Meridian's symbol.",
+    existingRich: false, revealHold: null,
+    parentGroup: "The Meridian",
+    mentions: [
+      { sentence: "The seal on it was the Meridian seal — a wave breaking over a tower.", source: "Ch. 41 · para 10" }
+    ],
+    proposedDesc: "The Meridian's heraldic symbol. Wave over a tower."
+  },
+  {
+    id: 14, confidence: "ambiguous",
+    name: "The Corvid coast", type: "Location", icon: "🌊",
+    existing: true, firstMentioned: null,
+    canonDesc: "A coastal region. Distinct from the ship.",
+    existingRich: false, revealHold: null,
+    separateFrom: "The Corvid",
+    separateNote: "The Corvid is a ship. This is a coast. Do not merge.",
+    mentions: [
+      { sentence: "the Ashen Fleet had been seen off the Corvid coast, moving north.", source: "Ch. 41 · para 17" }
+    ],
+    proposedDesc: "The coastal region off which the Ashen Fleet was seen."
+  }
+];
+
+const NOISE = [
+  { id: 'n1', name: "Whitmouth", reason: "Mentioned once, no context" },
+  { id: 'n2', name: "Emberfall", reason: "Mentioned once, hypothetical destination" },
+  { id: 'n3', name: "The Tide-Watchers", reason: "Mentioned once, possibly a sub-faction you haven't decided on" },
+  { id: 'n4', name: "the inner isles", reason: "Generic geography" }
+];
+
+let state = {};   // { entityId: { action, desc?, chapter?, hold? } }
+let stack = [];
+let noiseState = {};  // { noiseId: 'dismissed' | 'promoted' }
+let previewChapter = 41;
+
+const $ = id => document.getElementById(id);
+
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2400); }
+function saveState(){ try { localStorage.setItem('review_v8', JSON.stringify({ state, stack, noiseState })); } catch(e){} }
+function snapshot(){ return JSON.parse(JSON.stringify({ state, noiseState })); }
+function pushUndo(label){ stack.push({ label, snap: snapshot() }); }
+
+function undo(){
+  if (stack.length === 0) return;
+  const last = stack.pop();
+  state = last.snap.state;
+  noiseState = last.snap.noiseState;
+  renderAll();
+  toast('Undid: ' + last.label);
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderAll(){
+  renderConfident();
+  renderAmbiguous();
+  renderNoise();
+  updateCounts();
+  updateProgress();
+  updateUndoBar();
+}
+
+function updateCounts(){
+  const conf = ENTITIES.filter(e => e.confidence === 'confident').length;
+  const ambig = ENTITIES.filter(e => e.confidence === 'ambiguous').length;
+  const holds = ENTITIES.filter(e => e.revealHold).length;
+  $('count-confident').textContent = conf;
+  $('count-ambiguous').textContent = ambig;
+  $('count-noise').textContent = NOISE.length;
+  $('count-holds').textContent = holds;
+}
+
+function renderConfident(){
+  const container = $('confident-list');
+  container.innerHTML = '';
+  ENTITIES.filter(e => e.confidence === 'confident').forEach(e => {
+    container.appendChild(buildCard(e));
+  });
+}
+
+function renderAmbiguous(){
+  const container = $('ambiguous-list');
+  container.innerHTML = '';
+  ENTITIES.filter(e => e.confidence === 'ambiguous').forEach(e => {
+    container.appendChild(buildCard(e));
+  });
+}
+
+function buildCard(entity){
+  const s = state[entity.id];
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'card-' + entity.id;
+  if (s) card.classList.add('completed', s.action);
+
+  // Head
+  const matchedBadge = entity.existing
+    ? '<span class="badge matched">Matched to existing</span>'
+    : '<span class="badge new">New entity</span>';
+  const richBadge = entity.existingRich ? '<span class="badge rich">Rich description</span>' : '';
+  const draftBadge = entity.draftState ? '<span class="badge draft">Draft state</span>' : '';
+
+  // Evidence section
+  const evidenceHtml = entity.mentions.map(m =>
+    '<div class="evidence">' + escapeHtml(m.sentence) +
+    '<span class="source">' + escapeHtml(m.source) + '</span></div>'
+  ).join('');
+
+  // Existing entity section
+  let existingHtml = '';
+  if (entity.existing && entity.canonDesc){
+    existingHtml =
+      '<div class="section">' +
+        '<div class="section-label">Existing description</div>' +
+        '<div class="existing"><span class="label">' + escapeHtml(entity.name) + ' · First mentioned Ch. ' + (entity.firstMentioned || '?') + '</span>' + escapeHtml(entity.canonDesc) + '</div>' +
+      '</div>';
+  }
+
+  // Related mentions (near-duplicates)
+  let relatedHtml = '';
+  if (entity.relatedMentions){
+    relatedHtml =
+      '<div class="section">' +
+        '<div class="section-label">Related mentions in this chapter</div>' +
+        '<div class="related">' +
+          entity.relatedMentions.map(r =>
+            '<div><span class="rel-name">' + escapeHtml(r.name) + '</span> · ' + r.kind + ' — ' + escapeHtml(r.note) + '</div>'
+          ).join('') +
+          '<div style="margin-top:8px;color:var(--text-muted);font-size:12px;">These may be separate entities or aspects of ' + escapeHtml(entity.name) + '. They appear as separate cards below.</div>' +
+        '</div>' +
+      '</div>';
+  }
+  if (entity.separateFrom){
+    relatedHtml =
+      '<div class="section">' +
+        '<div class="section-label">Related</div>' +
+        '<div class="related">' +
+          '<div>' + escapeHtml(entity.separateNote || '') + '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  if (entity.parentGroup){
+    relatedHtml =
+      '<div class="section">' +
+        '<div class="section-label">Grouped with</div>' +
+        '<div class="related">' +
+          '<div>Part of the <span class="rel-name">' + escapeHtml(entity.parentGroup) + '</span> cluster. Will be grouped when you decide how.</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // Reveal hold
+  let revealHtml = '';
+  if (entity.revealHold){
+    revealHtml =
+      '<div class="section">' +
+        '<div class="section-label">Reveal hold</div>' +
+        '<div class="reveal-flag">' +
+          '<span class="rf-label">⚠ Hold</span>' +
+          escapeHtml(entity.revealHold.note) +
+        '</div>' +
+      '</div>';
+  }
+
+  // Proposed description (only for new entities)
+  let proposedHtml = '';
+  if (!entity.existing && entity.proposedDesc){
+    proposedHtml =
+      '<div class="section">' +
+        '<div class="section-label">Proposed description</div>' +
+        '<div class="existing"><span class="label">New entity</span>' + escapeHtml(entity.proposedDesc) + '</div>' +
+      '</div>';
+  } else if (entity.existing && entity.proposedDesc && !entity.existingRich){
+    proposedHtml =
+      '<div class="section">' +
+        '<div class="section-label">Proposed description</div>' +
+        '<div class="existing"><span class="label">Suggested addition</span>' + escapeHtml(entity.proposedDesc) + '</div>' +
+      '</div>';
+  }
+
+  // Consequence
+  const consequenceHtml = !s ? (
+    '<div class="section">' +
+      '<div class="section-label">If you add this appearance</div>' +
+      '<div class="consequence">' +
+        (entity.existing
+          ? '<div><span class="arrow">→</span>New evidence logged to <strong>' + escapeHtml(entity.name) + '</strong></div>' +
+            (entity.existingRich ? '<div><span class="arrow">→</span>Existing rich description is <strong>kept</strong> (not overwritten)</div>' : '<div><span class="arrow">→</span>Description will be updated</div>')
+          : '<div><span class="arrow">→</span>New entity created with the proposed description</div>') +
+        '<div><span class="arrow">→</span>Readers see it starting Chapter ' + CHAPTER.number + '</div>' +
+      '</div>' +
+    '</div>'
+  ) : '';
+
+  // State panel
+  const entityStateVal = entity.existing
+    ? '<span class="yes">Canon ✓</span>'
+    : '<span class="pending">Not yet canon</span>';
+  const suggestionStateVal = s
+    ? {
+        added: '<span class="yes">Added</span>',
+        edited: '<span class="yes">Edited & added</span>',
+        held: '<span class="later">Held</span>',
+        skipped: '<span class="no">Skipped</span>',
+        suppressed: '<span class="no">Suppressed</span>',
+        grouped: '<span class="later">Grouped</span>'
+      }[s.action] || '<span class="pending">Pending</span>'
+    : '<span class="pending">Pending</span>';
+
+  const stateHtml =
+    '<div class="state-panel">' +
+      '<div class="state-cell">' +
+        '<span class="label">Entity</span>' +
+        '<div class="val">' + entityStateVal + '</div>' +
+      '</div>' +
+      '<div class="state-cell">' +
+        '<span class="label">This appearance</span>' +
+        '<div class="val">' + suggestionStateVal + '</div>' +
+      '</div>' +
+    '</div>';
+
+  // Actions
+  const disabled = s ? 'disabled' : '';
+  const actionsHtml =
+    '<div class="card-actions">' +
+      '<button class="btn primary" ' + disabled + ' onclick="act(\'added\', ' + entity.id + ')">' + (entity.existing ? 'Add appearance' : 'Create entity') + '</button>' +
+      '<button class="btn" ' + disabled + ' onclick="openEdit(' + entity.id + ')">Edit description</button>' +
+      (entity.revealHold ? '<button class="btn hold" ' + disabled + ' onclick="act(\'held\', ' + entity.id + ')">Keep hold</button>' : '') +
+      '<button class="btn muted" ' + disabled + ' onclick="act(\'skipped\', ' + entity.id + ')">Skip</button>' +
+      '<button class="btn danger" ' + disabled + ' onclick="act(\'suppressed\', ' + entity.id + ')">Suppress entity</button>' +
+    '</div>';
+
+  // Edit panel
+  const editPanel =
+    '<div class="panel" id="edit-panel-' + entity.id + '">' +
+      '<label class="panel-label">Description</label>' +
+      '<textarea id="edit-ta-' + entity.id + '">' + escapeHtml(entity.existingRich ? (entity.canonDesc || '') : (entity.proposedDesc || entity.canonDesc || '')) + '</textarea>' +
+      '<div class="panel-row">' +
+        '<button class="btn primary" onclick="saveEdit(' + entity.id + ')">Save</button>' +
+        '<button class="btn muted" onclick="closeEdit(' + entity.id + ')">Cancel</button>' +
+      '</div>' +
+    '</div>';
+
+  card.innerHTML =
+    '<div class="card-head">' +
+      '<div class="card-title-row">' +
+        '<div>' +
+          '<div class="card-name">' + entity.icon + ' ' + escapeHtml(entity.name) + '</div>' +
+          '<div class="card-meta">' + entity.type + ' · ' + entity.mentions.length + ' mention' + (entity.mentions.length > 1 ? 's' : '') + ' in Ch. 41</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-badges">' + matchedBadge + richBadge + draftBadge + '</div>' +
+    '</div>' +
+    '<div class="card-body">' +
+      '<div class="section">' +
+        '<div class="section-label">Why this appeared</div>' +
+        evidenceHtml +
+      '</div>' +
+      existingHtml +
+      proposedHtml +
+      relatedHtml +
+      revealHtml +
+      consequenceHtml +
+    '</div>' +
+    stateHtml +
+    actionsHtml +
+    editPanel;
+
+  return card;
+}
+
+/* ============================================================
+   NOISE
+   ============================================================ */
+function renderNoise(){
+  const container = $('noise-list');
+  container.innerHTML = '';
+  NOISE.forEach(n => {
+    const st = noiseState[n.id];
+    const row = document.createElement('div');
+    row.className = 'noise-row';
+    if (st === 'dismissed') row.classList.add('dismissed');
+    if (st === 'promoted') row.classList.add('promoted');
+    row.innerHTML =
+      '<div>' +
+        '<div class="noise-name">' + escapeHtml(n.name) + '</div>' +
+        '<div class="noise-reason">' + escapeHtml(n.reason) + '</div>' +
+      '</div>' +
+      '<div class="noise-actions">' +
+        '<button class="btn muted" onclick="dismissNoise(\'' + n.id + '\')">Dismiss</button>' +
+        '<button class="btn" onclick="promoteNoise(\'' + n.id + '\')">Promote to entity</button>' +
+      '</div>';
+    container.appendChild(row);
+  });
+}
+
+function dismissNoise(id){
+  pushUndo('Dismissed noise');
+  noiseState[id] = 'dismissed';
+  renderAll();
+  saveState();
+}
+function promoteNoise(id){
+  pushUndo('Promoted noise to entity');
+  noiseState[id] = 'promoted';
+  toast('Marked as entity. Add it to the review later.');
+  renderAll();
+  saveState();
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function act(action, id){
+  const entity = ENTITIES.find(e => e.id === id);
+  if (!entity || state[id]) return;
+  pushUndo(action === 'added' ? 'Added ' + entity.name : action === 'held' ? 'Held ' + entity.name : action === 'suppressed' ? 'Suppressed ' + entity.name : 'Skipped ' + entity.name);
+  state[id] = { action };
+  renderAll();
+  saveState();
+  if (action === 'added') toast('Added. Existing description ' + (entity.existingRich ? 'kept.' : 'updated.'));
+}
+
+function openEdit(id){ $('edit-panel-' + id).classList.add('visible'); }
+function closeEdit(id){ $('edit-panel-' + id).classList.remove('visible'); }
+function saveEdit(id){
+  const ta = $('edit-ta-' + id);
+  const val = ta.value.trim();
+  if (!val) return;
+  const entity = ENTITIES.find(e => e.id === id);
+  pushUndo('Edited ' + entity.name);
+  state[id] = { action: 'edited', desc: val };
+  renderAll();
+  saveState();
+  toast('Saved.');
+}
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+function updateProgress(){
+  const total = ENTITIES.length;
+  const done = Object.keys(state).length;
+  $('progress').textContent = done + ' / ' + total;
+  if (done === total) $('finish-panel').classList.add('visible');
+  else $('finish-panel').classList.remove('visible');
+}
+
+function updateUndoBar(){
+  const bar = $('undo-bar');
+  const text = $('undo-bar-text');
+  if (stack.length === 0){ bar.classList.remove('visible'); return; }
+  const last = stack[stack.length-1];
+  text.innerHTML = 'Last: <strong>' + escapeHtml(last.label) + '</strong>';
+  bar.classList.add('visible');
+}
+
+/* ============================================================
+   READER PREVIEW
+   ============================================================ */
+function showReaderPreview(){
+  $('review-view').style.display = 'none';
+  $('reader-view').classList.add('visible');
+  setPreviewChapter(41);
+}
+function backToReview(){
+  $('reader-view').classList.remove('visible');
+  $('review-view').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function setPreviewChapter(ch){
+  previewChapter = ch;
+  $('ch-41-btn').classList.toggle('active', ch === 41);
+  $('ch-60-btn').classList.toggle('active', ch === 60);
+  $('reader-subtitle').textContent = 'Reader at Chapter ' + ch;
+  $('reader-title').textContent = CHAPTER.title;
+  renderPreview();
+}
+
+function renderPreview(){
+  // Build the visible/stub sets for the current reader position.
+  // An entity is "held" for the reader if revealHold.chapter > previewChapter.
+  // An entity is "visible" if it's accepted and either has no hold or the hold has passed.
+  const visible = [];
+  const stubs = [];
+
+  ENTITIES.forEach(e => {
+    const s = state[e.id];
+    if (!s) return;
+    if (s.action === 'skipped' || s.action === 'suppressed' || s.action === 'grouped') return;
+
+    if (e.revealHold && e.revealHold.chapter && e.revealHold.chapter > previewChapter){
+      stubs.push(e);
+    } else {
+      visible.push(e);
+    }
+  });
+
+  // Sort longer names first so "The Meridian Compact" matches before "The Meridian"
+  const sortByLen = arr => [...arr].sort((a,b) => b.name.length - a.name.length);
+  const sortedVisible = sortByLen(visible);
+  const sortedStubs = sortByLen(stubs);
+
+  const body = $('reader-body');
+  body.innerHTML = '';
+
+  CHAPTER.paragraphs.forEach(par => {
+    let html = escapeHtml(par);
+    // Apply stubs first (longer names, then shorter), then visible
+    sortedStubs.forEach(e => {
+      const re = new RegExp('\\b' + escapeRegex(e.name) + '\\b', 'g');
+      html = html.replace(re, '<span class="entity-link stub" onclick="openReaderCard(' + e.id + ')">' + e.name + '</span>');
+    });
+    sortedVisible.forEach(e => {
+      const re = new RegExp('\\b' + escapeRegex(e.name) + '\\b', 'g');
+      html = html.replace(re, '<span class="entity-link" onclick="openReaderCard(' + e.id + ')">' + e.name + '</span>');
+    });
+    const p = document.createElement('p');
+    p.innerHTML = html;
+    body.appendChild(p);
+  });
+
+  const note = $('reader-note');
+  const visibleNames = visible.map(e => e.name);
+  const stubNames = stubs.map(e => e.name + ' (hold to Ch. ' + e.revealHold.chapter + ')');
+  note.innerHTML =
+    '<span class="diag-label">Creator preview diagnostics</span><br>' +
+    '<strong>Reader can tap:</strong> ' + (visibleNames.length ? visibleNames.join(', ') : 'none') + '<br>' +
+    '<strong>Reader sees as stub:</strong> ' + (stubNames.length ? stubNames.join(', ') : 'none');
+}
+
+function openReaderCard(id){
+  const e = ENTITIES.find(x => x.id === id);
+  if (!e) return;
+  const isHeld = e.revealHold && e.revealHold.chapter && e.revealHold.chapter > previewChapter;
+
+  $('rc-icon').textContent = e.icon;
+  $('rc-name').textContent = e.name;
+  $('rc-type').textContent = e.type;
+
+  const card = $('reader-card');
+  if (isHeld){
+    card.classList.add('stub-card');
+    $('rc-summary').style.display = 'none';
+    $('rc-stub-text').style.display = 'block';
+    $('rc-stub-text').textContent = "You haven't discovered this yet.";
+    $('rc-meta').textContent = 'Reader at Chapter ' + previewChapter;
+  } else {
+    card.classList.remove('stub-card');
+    $('rc-summary').style.display = 'block';
+    $('rc-stub-text').style.display = 'none';
+    const s = state[e.id];
+    const desc = (s && s.desc) || e.canonDesc || e.proposedDesc || '';
+    $('rc-summary').textContent = desc;
+    $('rc-meta').textContent = 'Reader at Chapter ' + previewChapter + (e.firstMentioned ? ' · First mentioned in Chapter ' + e.firstMentioned : '');
+  }
+  $('reader-card-backdrop').classList.add('visible');
+}
+function closeReaderCard(){ $('reader-card-backdrop').classList.remove('visible'); }
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReaderCard(); });
+document.addEventListener('DOMContentLoaded', () => {
+  const backdrop = $('reader-card-backdrop');
+  backdrop.addEventListener('click', e => { if (e.target.id === 'reader-card-backdrop') closeReaderCard(); });
+});
+
+// Init
+renderAll();
+
+// Restore
+try {
+  const saved = JSON.parse(localStorage.getItem('review_v8') || 'null');
+  if (saved){
+    state = saved.state || {};
+    stack = saved.stack || [];
+    noiseState = saved.noiseState || {};
+    renderAll();
+  }
+} catch(e){}
+
+setInterval(saveState, 10000);
+window.addEventListener('beforeunload', saveState);
+
+window.__reviewV8 = { get state(){ return state; }, get noiseState(){ return noiseState; }, VERSION };
+console.log('Review v8 ready.');
+</script>
+
+</body>
+</html>
