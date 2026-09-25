@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Saltbound · Chapter 41 · Canon Review v9.8</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0d0d10;--surface:#16161c;--surface-2:#1e1e26;--border:#2a2a35;--border-2:#3a3a48;--text:#ece9e4;--text-dim:#a09a90;--text-muted:#6b665e;--gold:#d4a95a;--gold-dim:#8a6f3a;--gold-glow:rgba(212,169,90,0.12);--green:#6bbf7a;--red:#c96565;--blue:#6a9fd4;--purple:#a07cd4;--amber:#d4a95a}
+  html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(13,13,16,0.94);backdrop-filter:blur(10px);flex-wrap:wrap;gap:12px}
+  .topbar-title{font-size:14px;font-weight:600}
+  .topbar-sub{font-size:11px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px}
+  .progress{font-family:ui-monospace,monospace;font-size:12px;color:var(--text-dim)}
+  .container{max-width:900px;margin:0 auto;padding:28px 24px 180px}
+  .intro{padding:20px 24px;background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:28px;font-size:13.5px;color:var(--text-dim);line-height:1.75}
+  .intro h2{font-family:Georgia,serif;font-weight:400;font-size:20px;color:var(--text);margin-bottom:10px}
+  .intro strong{color:var(--text)}
+  .intro code{background:var(--surface-2);padding:2px 6px;border-radius:4px;color:var(--gold);font-size:12px}
+  .intro p+p{margin-top:10px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden}
+  .card.done{opacity:0.68}
+  .card.accepted{border-left:3px solid var(--green)}
+  .card.draft{border-left:3px solid var(--amber)}
+  .card.dismissed{border-left:3px solid var(--text-muted)}
+  .card-head{padding:16px 22px 14px;border-bottom:1px solid var(--border)}
+  .card-name{font-size:18px;font-weight:600;line-height:1.3}
+  .card-meta{font-size:12px;color:var(--text-muted);margin-top:3px}
+  .card-body{padding:18px 22px}
+  .section{margin-bottom:20px}
+  .section:last-child{margin-bottom:0}
+  .section-label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .section-label .n{font-family:ui-monospace,monospace;font-size:10px;color:var(--text-muted);font-weight:500;letter-spacing:0;text-transform:none}
+  .mention{font-family:Georgia,serif;font-size:14px;line-height:1.6;color:var(--text-dim);padding:10px 14px;background:var(--surface-2);border-radius:8px;margin-bottom:6px;border-left:3px solid var(--border-2)}
+  .mention:last-child{margin-bottom:0}
+  .mention .source{display:block;margin-top:6px;font-size:11px;color:var(--text-muted);font-family:ui-monospace,monospace;font-style:normal}
+  .claim{padding:12px 14px;background:var(--surface-2);border-radius:8px;margin-bottom:8px;border-left:3px solid var(--border-2)}
+  .claim:last-child{margin-bottom:0}
+  .claim.established{border-left-color:var(--green)}
+  .claim.reported{border-left-color:var(--blue)}
+  .claim.implied{border-left-color:var(--amber)}
+  .claim.uncertain{border-left-color:var(--purple)}
+  .claim.invalid{border-left-color:var(--red);opacity:0.65;text-decoration:line-through;text-decoration-color:rgba(201,101,101,0.4)}
+  .claim-statement{font-family:Georgia,serif;font-size:14px;line-height:1.55;color:var(--text);margin-bottom:6px}
+  .claim-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .claim-tag{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;border:1px solid var(--border-2);color:var(--text-muted)}
+  .claim-tag.src{color:var(--text-dim)}
+  .claim-tag.est{color:var(--green);border-color:rgba(107,191,122,0.35)}
+  .claim-tag.rep{color:var(--blue);border-color:rgba(106,159,212,0.35)}
+  .claim-tag.imp{color:var(--amber);border-color:rgba(212,169,90,0.35)}
+  .claim-tag.unc{color:var(--purple);border-color:rgba(160,124,212,0.35)}
+  .claim-tag.rev{color:var(--amber);border-color:rgba(212,169,90,0.35)}
+  .claim-tag.norev{color:var(--text-muted)}
+  .claim-actions{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+  .claim-actions button{font-family:inherit;font-size:10px;font-weight:500;padding:3px 8px;border-radius:5px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-muted);transition:all 0.15s}
+  .claim-actions button:hover{border-color:var(--text-dim);color:var(--text)}
+  .claim-actions button.active{border-color:var(--gold);color:var(--gold);background:var(--gold-glow)}
+  .meta-row{padding:8px 12px;background:var(--surface-2);border-radius:6px;font-size:13px;margin-bottom:6px;color:var(--text-dim);display:flex;justify-content:space-between;gap:12px}
+  .meta-row:last-child{margin-bottom:0}
+  .meta-row .k{color:var(--text-muted);font-size:11px;letter-spacing:0.08em;text-transform:uppercase}
+  .meta-row .v{color:var(--text);font-family:ui-monospace,monospace;font-size:12px}
+  .rel{padding:8px 12px;background:var(--surface-2);border-radius:6px;font-size:13px;margin-bottom:6px;color:var(--text-dim)}
+  .rel:last-child{margin-bottom:0}
+  .rel .rel-to{color:var(--text);font-weight:500}
+  .rel .rel-kind{color:var(--text-muted);font-size:12px}
+  .card-actions{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:var(--surface)}
+  .btn{font-family:inherit;font-size:12px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;transition:all 0.15s;border:1px solid var(--border);background:var(--surface-2);color:var(--text)}
+  .btn:hover:not(:disabled){border-color:var(--text-dim)}
+  .btn:disabled{opacity:0.35;cursor:not-allowed}
+  .btn.primary{background:var(--gold-glow);border-color:var(--gold-dim);color:var(--gold)}
+  .btn.primary:hover:not(:disabled){background:rgba(212,169,90,0.22);border-color:var(--gold)}
+  .btn.danger{background:rgba(201,101,101,0.08);border-color:rgba(201,101,101,0.3);color:var(--red)}
+  .btn.danger:hover:not(:disabled){background:rgba(201,101,101,0.18);border-color:var(--red)}
+  .btn.muted{color:var(--text-muted)}
+  .btn.muted:hover:not(:disabled){border-color:var(--text-muted);color:var(--text)}
+  .finish-panel{margin-top:28px;padding:28px;background:var(--surface);border:1px solid var(--gold-dim);border-radius:14px;text-align:center;display:none}
+  .finish-panel.visible{display:block}
+  .finish-panel h2{font-family:Georgia,serif;font-weight:400;font-size:24px;margin-bottom:10px}
+  .finish-panel p{color:var(--text-dim);font-size:13px;margin-bottom:16px}
+  .finish-btn{background:var(--gold-glow);border:1px solid var(--gold);color:var(--gold);font-family:inherit;font-size:14px;font-weight:500;padding:12px 28px;border-radius:10px;cursor:pointer;transition:all 0.15s}
+  .finish-btn:hover{background:rgba(212,169,90,0.22)}
+  #reader-view{display:none}
+  #reader-view.visible{display:block}
+  .back-link{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;margin-bottom:24px;transition:all 0.15s}
+  .back-link:hover{border-color:var(--gold-dim);color:var(--gold)}
+  .preview-controls{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap}
+  .preview-controls label{font-size:12px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase}
+  .preview-controls button{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:inherit;font-size:13px;padding:7px 14px;border-radius:7px;cursor:pointer;transition:all 0.15s}
+  .preview-controls button.active{background:var(--gold-glow);border-color:var(--gold);color:var(--gold);font-weight:600}
+  .reader-header{padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:28px}
+  .reader-header h1{font-family:Georgia,serif;font-weight:400;font-size:30px;margin-bottom:6px}
+  .reader-header p{color:var(--text-dim);font-size:13px}
+  .reader-body{font-family:Georgia,serif;font-size:18px;line-height:1.85;color:#ded9d1}
+  .reader-body p{margin-bottom:22px}
+  .entity-link{color:var(--gold);border-bottom:1px dotted rgba(212,169,90,0.5);cursor:pointer;padding:0 1px;transition:background 0.15s}
+  .entity-link:hover{background:var(--gold-glow)}
+  #reader-card-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.22s;z-index:100}
+  #reader-card-backdrop.visible{opacity:1;pointer-events:auto}
+  #reader-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:520px;width:100%;max-height:82vh;overflow-y:auto;padding:28px;transform:translateY(16px) scale(0.98);transition:transform 0.22s;box-shadow:0 24px 60px rgba(0,0,0,0.6)}
+  #reader-card-backdrop.visible #reader-card{transform:translateY(0) scale(1)}
+  .rc-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+  .rc-icon{font-size:26px;line-height:1;padding-top:4px}
+  .rc-title-block{flex:1}
+  .rc-type{font-size:10px;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:4px;font-weight:600}
+  .rc-name{font-family:Georgia,serif;font-size:22px;font-weight:400;line-height:1.2}
+  .rc-close{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;font-family:inherit}
+  .rc-close:hover{color:var(--text)}
+  .rc-section-label{font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:8px;margin-top:16px}
+  .rc-section-label:first-of-type{margin-top:0}
+  .rc-knows{list-style:none}
+  .rc-knows li{font-family:Georgia,serif;font-size:15px;line-height:1.6;color:var(--text-dim);padding:8px 0 8px 20px;position:relative;border-bottom:1px solid var(--border)}
+  .rc-knows li:last-child{border-bottom:none}
+  .rc-knows li::before{content:'·';position:absolute;left:6px;color:var(--gold);font-weight:700}
+  .rc-holding{font-family:Georgia,serif;font-size:14px;line-height:1.6;color:var(--text-muted);font-style:italic;padding:12px 14px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--border-2);margin-top:16px}
+  .rc-meta{font-size:12px;color:var(--text-muted);padding-top:14px;border-top:1px solid var(--border);margin-top:16px}
+  .reader-note{margin-top:32px;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--text-dim);line-height:1.7}
+  .reader-note strong{color:var(--text)}
+  .reader-note .diag-label{display:inline-block;font-size:10px;color:var(--text-muted);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+  #undo-bar{position:fixed;bottom:0;left:0;right:0;padding:10px 24px;background:rgba(22,22,28,0.98);border-top:1px solid var(--border-2);display:none;justify-content:space-between;align-items:center;gap:16px;z-index:80;backdrop-filter:blur(10px)}
+  #undo-bar.visible{display:flex}
+  #undo-bar-text{font-size:12px;color:var(--text-dim);flex:1}
+  #undo-bar-text strong{color:var(--text)}
+  #undo-bar button{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12px;padding:7px 16px;border-radius:7px;cursor:pointer;transition:all 0.15s;font-weight:500}
+  #undo-bar button:hover{border-color:var(--gold);color:var(--gold)}
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);padding:11px 22px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all 0.2s;z-index:200;box-shadow:0 12px 32px rgba(0,0,0,0.5);max-width:560px}
+  .toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (max-width:600px){.container{padding:20px 16px 180px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">The Saltbound · Chapter 41</div>
+    <div class="topbar-sub">Canon review · v9.8</div>
+  </div>
+  <div class="topbar-right">
+    <div class="progress" id="progress">0 / 14</div>
+  </div>
+</div>
+
+<div class="container" id="review-view">
+  <div class="intro">
+    <h2>Three kinds of statement</h2>
+    <p><strong>Claims</strong> are statements your text actually makes. Each claim has a source, a certainty, and a canon status. The reader projection shows claims that are canon, established or reported, and past their reveal chapter.</p>
+    <p><strong>Open questions</strong> are things you haven't decided. They are never shown to readers.</p>
+    <p><strong>Planned reveals</strong> are future scenes you intend to write. They are never shown to readers until the scene exists and becomes a claim.</p>
+    <p>No claim is invented. If the tool does not know something, it says so.</p>
+  </div>
+
+  <div id="entity-list"></div>
+
+  <div class="finish-panel" id="finish-panel">
+    <h2>Review complete</h2>
+    <p>All entities resolved.</p>
+    <button class="finish-btn" onclick="showReaderPreview()">Preview as reader →</button>
+  </div>
+</div>
+
+<div class="container" id="reader-view">
+  <button class="back-link" onclick="backToReview()">← Back to review</button>
+  <div class="preview-controls">
+    <label>Reader at chapter:</label>
+    <button id="ch-41-btn" class="active" onclick="setPreviewChapter(41)">Chapter 41</button>
+    <button id="ch-55-btn" onclick="setPreviewChapter(55)">Chapter 55</button>
+    <button id="ch-58-btn" onclick="setPreviewChapter(58)">Chapter 58</button>
+  </div>
+  <div class="reader-header">
+    <h1 id="reader-title">The Salt Road</h1>
+    <p id="reader-subtitle">Reader at Chapter 41</p>
+  </div>
+  <div class="reader-body" id="reader-body"></div>
+  <div class="reader-note" id="reader-note"></div>
+</div>
+
+<div id="reader-card-backdrop">
+  <div id="reader-card">
+    <div class="rc-header">
+      <div class="rc-icon" id="rc-icon"></div>
+      <div class="rc-title-block">
+        <div class="rc-type" id="rc-type"></div>
+        <h2 class="rc-name" id="rc-name"></h2>
+      </div>
+      <button class="rc-close" onclick="closeReaderCard()">✕</button>
+    </div>
+    <div id="rc-content"></div>
+    <div class="rc-meta" id="rc-meta"></div>
+  </div>
+</div>
+
+<div id="undo-bar">
+  <div id="undo-bar-text"></div>
+  <button onclick="undo()">Undo</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const VERSION = 'v9.8';
+
+const CHAPTER = {
+  number: 41,
+  title: "The Salt Road",
+  paragraphs: [
+    "The mule died an hour before dawn, somewhere between Whitmouth and the Salt Road, which is to say: nowhere that had a name. Sera cut the traces, took the water skin, and left the body for the gulls. She had liked that mule. That was the problem with mules.",
+    "She walked the rest of the way.",
+    "By midday she reached the Drowned Chapel. It stood half in the tidal flats, half out, its bell tower leaning west like a man listening for something. The Order of the Tide had built it two hundred years ago, back when the Salt Road was still a road and not a suggestion. The chapel was empty now. It had been empty since the Sundering. But the doors were open, and Sera was tired, and there was no one left to tell her no.",
+    "Inside, someone had left a lamp burning.",
+    "That was the first wrong thing.",
+    "The second was the boy. He was sitting on the altar steps with his boots off, drying his feet, as if he'd walked the flats himself and hadn't just appeared in a place no living person had entered in seventeen years. He looked up when she came in. He did not look surprised.",
+    "You're Sera Vane, he said.",
+    "I am.",
+    "I'm supposed to give you this.",
+    "He held out a piece of paper, folded twice. The seal on it was the Meridian seal - a wave breaking over a tower. Sera had not seen that seal since the war. She took the paper. She did not open it. Not yet.",
+    "Who gave this to you?",
+    "A woman. She said to tell you that the Corvid is still in port at Harrow's Reach. She said you'd know what that meant.",
+    "Sera did know what that meant. She wished she didn't.",
+    "The boy's name was Kell. He was fourteen, maybe. He had the flat accent of the inner isles, which meant he'd been raised on the water and not on the Road. He'd been traveling with the woman for three weeks. He didn't know her name. He didn't know where she'd gone.",
+    "She said you'd come, Kell said. She seemed sure.",
+    "She was wrong.",
+    "She wasn't.",
+    "Sera looked at him for a long moment. Then she sat down on the steps beside him and took off her own boots, because her feet were bleeding and there was no point pretending otherwise.",
+    "They stayed the night in the chapel. Sera built a fire in the old brazier, the one the Tide-priests had used for their vigils, and she burned the letter after she'd read it. It said three things. It said that the Meridian Compact had been broken. It said that the Ashen Fleet had been seen off the Corvid coast, moving north. And it said that whoever had written this letter wanted Sera to go to Harrow's Reach and speak to a man called Aldric Crane, who ran the harbor there and who had, apparently, been waiting for her for eleven years.",
+    "She did not know an Aldric Crane. That was the fourth wrong thing. She had known every Meridian officer by name. She had known them by their handwriting. She had known most of them by the sound of their boots on stone. There had been no Aldric Crane in the Meridian.",
+    "Kell slept through all of it. Sera sat up with her back against the altar and watched the tide come in through the broken floor. The Drowned Chapel did what its name promised.",
+    "Sera had left nothing on the altar. She wasn't sure if that was wisdom or cowardice.",
+    "In the morning, Kell asked her where they were going.",
+    "Harrow's Reach, she said.",
+    "To see the man?",
+    "To see the man.",
+    "Are you going to kill him?",
+    "Sera considered the question. She was not offended by it.",
+    "I don't know yet, she said. It depends on what he tells me.",
+    "They took the Salt Road north. It had been a good road once - the Meridian had built it, and the Meridian had built everything to last - but seventeen years of tides and no maintenance had left it cracked and salt-bleached. They walked it at low tide.",
+    "On the second night they saw the lights of a ship moving south, far out, and Kell asked if it was the Corvid.",
+    "It's not the Corvid, Sera said.",
+    "How do you know?",
+    "Because the Corvid doesn't sail at night. It hasn't sailed at night since the Sundering.",
+    "Kell was quiet for a moment. Then he said, That's a strange thing to know about a ship.",
+    "Yes, Sera said. It is.",
+    "She did not tell him why she knew. She had not told anyone why she knew, not in eleven years.",
+    "They reached Harrow's Reach on the fourth day, which was sooner than she'd expected, which meant the Road was less ruined than she remembered, which meant the Meridian had been maintaining it, which meant the Meridian was still, in some form, alive. That was the fifth wrong thing.",
+    "The town was small and salt-stained and busy in the way that only harbor towns can be busy. Sera left Kell at the inn with enough silver for a meal and instructions not to leave. Then she walked down to the harbor to find the Corvid.",
+    "She found it in the third berth, which was where it had always been. It was not a large ship. It had never been a large ship. But it was the only ship on the coast that had been built before the Sundering and had survived it, and that was why Sera had spent eleven years trying not to look at it, and that was why, standing on the pier in the late afternoon light, she felt something she had not felt in a long time.",
+    "She felt like she was home.",
+    "That was the sixth wrong thing, and it was the one that frightened her most."
+  ]
+};
+
+const ENTITIES = [
+  {
+    id: 'sera',
+    name: 'Sera Vane',
+    type: 'Character',
+    icon: '⚔',
+    aliases: ['Sera'],
+    possibleAliases: [],
+    mentions: [
+      { text: "Sera cut the traces, took the water skin, and left the body for the gulls.", source: "Ch. 41 · ¶1" },
+      { text: "You're Sera Vane, he said.", source: "Ch. 41 · ¶7" },
+      { text: "Sera had not seen that seal since the war.", source: "Ch. 41 · ¶10" },
+      { text: "She felt like she was home.", source: "Ch. 41 · ¶34" }
+    ],
+    claims: [
+      { text: "Sera knew every Meridian officer by name.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Sera knew them by their handwriting.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Sera knew most of them by the sound of their boots on stone.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Sera has not seen the Meridian seal since the war.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Sera is traveling north toward Harrow's Reach.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Sera may kill Aldric Crane, depending on what he tells her.", source: "dialogue (Sera)", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Sera has not shared why she knows the Corvid's rule.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: []
+  },
+  {
+    id: 'kell',
+    name: 'Kell',
+    type: 'Character',
+    icon: '👤',
+    aliases: [],
+    possibleAliases: [],
+    mentions: [
+      { text: "The boy's name was Kell. He was fourteen, maybe.", source: "Ch. 41 · ¶14" },
+      { text: "He didn't know her name. He didn't know where she'd gone.", source: "Ch. 41 · ¶14" }
+    ],
+    claims: [
+      { text: "Kell is roughly fourteen.", source: "narrator (Sera's guess)", certainty: "uncertain", canonStatus: "canon", reveal: 41 },
+      { text: "Kell has a flat inner-isles accent.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Kell traveled with an unnamed woman for three weeks.", source: "Kell's statement", certainty: "reported", canonStatus: "canon", reveal: 41 },
+      { text: "Kell was paid in silver.", source: "Kell's statement", certainty: "reported", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: []
+  },
+  {
+    id: 'corvid',
+    name: 'The Corvid',
+    type: 'Vessel (ship)',
+    icon: '⛵',
+    aliases: ['Corvid', 'the Corvid'],
+    possibleAliases: [],
+    mentions: [
+      { text: "the Corvid is still in port at Harrow's Reach", source: "Ch. 41 · ¶11" },
+      { text: "It's not the Corvid, Sera said.", source: "Ch. 41 · ¶28" },
+      { text: "She found it in the third berth, which was where it had always been.", source: "Ch. 41 · ¶34" }
+    ],
+    claims: [
+      { text: "The Corvid is a ship.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The Corvid is docked at Harrow's Reach, in the third berth.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The Corvid does not sail at night.", source: "Sera's statement", certainty: "reported", canonStatus: "canon", reveal: 41 },
+      { text: "The Corvid has not sailed at night since the Sundering.", source: "Sera's statement", certainty: "reported", canonStatus: "canon", reveal: 41 },
+      { text: "The Corvid was built before the Sundering and survived it.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [
+      { text: "Why the Corvid does not sail at night.", status: "unresolved" }
+    ],
+    plannedReveals: [
+      { description: "Sera's involvement with the Corvid", chapter: 58 }
+    ]
+  },
+  {
+    id: 'sundering',
+    name: 'The Sundering',
+    type: 'Event',
+    icon: '⚡',
+    aliases: ['Sundering', 'the Sundering'],
+    possibleAliases: [],
+    mentions: [
+      { text: "It had been empty since the Sundering.", source: "Ch. 41 · ¶3" },
+      { text: "It hasn't sailed at night since the Sundering.", source: "Ch. 41 · ¶30" }
+    ],
+    claims: [
+      { text: "The Sundering happened.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The Drowned Chapel has been empty since the Sundering.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The Corvid has not sailed at night since the Sundering.", source: "Sera's statement", certainty: "reported", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: [
+      { description: "What the Sundering actually was", chapter: 55 }
+    ]
+  },
+  {
+    id: 'aldric',
+    name: 'Aldric Crane',
+    type: 'Person (unconfirmed)',
+    icon: '👤',
+    aliases: ['Aldric'],
+    possibleAliases: [],
+    mentions: [
+      { text: "a man called Aldric Crane, who ran the harbor there and who had, apparently, been waiting for her for eleven years.", source: "Ch. 41 · ¶17" },
+      { text: "She did not know an Aldric Crane.", source: "Ch. 41 · ¶18" }
+    ],
+    claims: [
+      { text: "The name 'Aldric Crane' appears in an unsigned letter.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The letter claims Aldric Crane runs the harbor at Harrow's Reach.", source: "the letter", certainty: "reported", canonStatus: "canon", reveal: 41 },
+      { text: "The letter claims Aldric Crane has been waiting for Sera for eleven years.", source: "the letter", certainty: "reported", canonStatus: "canon", reveal: 41 },
+      { text: "Sera does not know an Aldric Crane.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [
+      { text: "Whether Aldric Crane exists.", status: "unresolved" },
+      { text: "Aldric Crane's identity.", status: "unresolved" }
+    ],
+    plannedReveals: []
+  },
+  {
+    id: 'meridian',
+    name: 'The Meridian',
+    type: 'Organization',
+    icon: '🌊',
+    aliases: ['Meridian', 'the Meridian'],
+    possibleAliases: [],
+    mentions: [
+      { text: "the Meridian had built it, and the Meridian had built everything to last", source: "Ch. 41 · ¶27" },
+      { text: "the Meridian had been maintaining it", source: "Ch. 41 · ¶33" }
+    ],
+    claims: [
+      { text: "The Meridian built the Salt Road.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The Meridian built everything to last.", source: "Sera's memory (reported)", certainty: "reported", canonStatus: "canon", reveal: 41 },
+      { text: "The Meridian Compact has been broken.", source: "the letter", certainty: "reported", canonStatus: "canon", reveal: 41 },
+      { text: "The Meridian has been maintaining the Salt Road.", source: "narrator (Sera's inference)", certainty: "implied", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: [],
+    subEntities: [
+      { name: 'The Meridian Compact', type: 'Treaty', note: "A document, distinct from the organization." },
+      { name: 'The Meridian seal', type: 'Symbol', note: "A heraldic mark, distinct from the organization." }
+    ]
+  },
+  {
+    id: 'letter',
+    name: 'The Meridian letter',
+    type: 'Object',
+    icon: '📜',
+    aliases: ['the letter'],
+    possibleAliases: [],
+    mentions: [
+      { text: "He held out a piece of paper, folded twice. The seal on it was the Meridian seal.", source: "Ch. 41 · ¶10" },
+      { text: "she burned the letter after she'd read it", source: "Ch. 41 · ¶17" }
+    ],
+    claims: [
+      { text: "A letter was given to Sera by Kell.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The letter bears the Meridian seal.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The letter says three things.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The letter is unsigned.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Sera burned the letter.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: []
+  },
+  {
+    id: 'chapel',
+    name: 'The Drowned Chapel',
+    type: 'Location',
+    icon: '🏛',
+    aliases: ['Drowned Chapel', 'the Drowned Chapel'],
+    possibleAliases: [],
+    mentions: [
+      { text: "By midday she reached the Drowned Chapel.", source: "Ch. 41 · ¶3" }
+    ],
+    claims: [
+      { text: "The Drowned Chapel is half in the tidal flats, half out.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "Its bell tower leans west.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "It was built by the Order of the Tide two hundred years ago.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "It has been empty since the Sundering.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: []
+  },
+  {
+    id: 'saltroad',
+    name: 'The Salt Road',
+    type: 'Location',
+    icon: '🛤',
+    aliases: ['Salt Road', 'the Salt Road'],
+    possibleAliases: [],
+    mentions: [
+      { text: "somewhere between Whitmouth and the Salt Road", source: "Ch. 41 · ¶1" },
+      { text: "They took the Salt Road north.", source: "Ch. 41 · ¶27" }
+    ],
+    claims: [
+      { text: "The Salt Road runs along the tidal coast.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "It was built by the Meridian.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The Salt Road is cracked and salt-bleached.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "It has gone seventeen years without maintenance.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [
+      { text: "Whether the decay coincides with the Sundering.", status: "unresolved" }
+    ],
+    plannedReveals: []
+  },
+  {
+    id: 'harrow',
+    name: "Harrow's Reach",
+    type: 'Location',
+    icon: '⚓',
+    aliases: [],
+    possibleAliases: [],
+    mentions: [
+      { text: "the Corvid is still in port at Harrow's Reach", source: "Ch. 41 · ¶11" },
+      { text: "They reached Harrow's Reach on the fourth day", source: "Ch. 41 · ¶33" }
+    ],
+    claims: [
+      { text: "Harrow's Reach is a harbor town.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "It is small and salt-stained.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 },
+      { text: "The Corvid is docked in the third berth.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: []
+  },
+  {
+    id: 'order',
+    name: 'The Order of the Tide',
+    type: 'Organization',
+    icon: '🌊',
+    aliases: ['Order of the Tide'],
+    possibleAliases: [
+      { name: 'Tide-priests', note: "May refer to the Order of the Tide. Not yet decided." },
+      { name: 'the Tide-priests', note: "Variant spelling. Not yet decided." }
+    ],
+    mentions: [
+      { text: "The Order of the Tide had built it two hundred years ago", source: "Ch. 41 · ¶3" },
+      { text: "the Tide-priests had used for their vigils", source: "Ch. 41 · ¶19" }
+    ],
+    claims: [
+      { text: "The Order of the Tide built the Drowned Chapel two hundred years ago.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: []
+  },
+  {
+    id: 'ashen',
+    name: 'The Ashen Fleet',
+    type: 'Claim only (unverified)',
+    icon: '🔥',
+    aliases: ['Ashen Fleet', 'the Ashen Fleet'],
+    possibleAliases: [],
+    mentions: [
+      { text: "the Ashen Fleet had been seen off the Corvid coast, moving north.", source: "Ch. 41 · ¶17" }
+    ],
+    claims: [
+      { text: "The letter claims the Ashen Fleet was seen off the Corvid coast, moving north.", source: "the letter", certainty: "reported", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [
+      { text: "Whether the Ashen Fleet exists at all.", status: "unresolved" }
+    ],
+    plannedReveals: []
+  },
+  {
+    id: 'war',
+    name: 'The war',
+    type: 'Referenced (undefined)',
+    icon: '⚔',
+    aliases: [],
+    possibleAliases: [],
+    mentions: [
+      { text: "Sera had not seen that seal since the war.", source: "Ch. 41 · ¶10" }
+    ],
+    claims: [
+      { text: "A war is referenced by Sera, in whose aftermath she last saw the Meridian seal.", source: "narrator", certainty: "established", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [
+      { text: "Whether the war is the Sundering or a separate conflict.", status: "unresolved" }
+    ],
+    plannedReveals: []
+  },
+  {
+    id: 'corvidcoast',
+    name: 'The Corvid coast',
+    type: 'Location',
+    icon: '🌊',
+    aliases: ['Corvid coast', 'the Corvid coast'],
+    possibleAliases: [],
+    mentions: [
+      { text: "the Ashen Fleet had been seen off the Corvid coast, moving north.", source: "Ch. 41 · ¶17" }
+    ],
+    claims: [
+      { text: "The Corvid coast is a coastal region.", source: "the letter (referenced)", certainty: "reported", canonStatus: "canon", reveal: 41 }
+    ],
+    openQuestions: [],
+    plannedReveals: [],
+    disambiguation: "Distinct from the ship 'The Corvid'. Do not merge."
+  }
+];
+
+let entityState = {};
+let stack = [];
+let previewChapter = 41;
+
+const $ = id => document.getElementById(id);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2400); }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function saveState(){ try { localStorage.setItem('review_v98', JSON.stringify({ entityState })); } catch(e){} }
+function snapshot(){ return JSON.parse(JSON.stringify(entityState)); }
+function pushUndo(label){ stack.push({ label, snap: snapshot() }); }
+
+function undo(){
+  if (stack.length === 0) return;
+  const last = stack.pop();
+  entityState = last.snap;
+  renderAll();
+  toast('Undid: ' + last.label);
+}
+
+function renderAll(){ renderEntities(); updateProgress(); updateUndoBar(); }
+
+function renderAliases(list){
+  if (!list || !list.length) return '';
+  return list.map(a => {
+    if (typeof a === 'string') return '<div class="rel">≡ <span class="rel-to">' + escapeHtml(a) + '</span></div>';
+    return '<div class="rel">≡ <span class="rel-to">' + escapeHtml(a.name) + '</span></div>';
+  }).join('');
+}
+
+function renderPossibleAliases(list){
+  if (!list || !list.length) return '';
+  return list.map(a =>
+    '<div class="rel">? <span class="rel-to">' + escapeHtml(a.name) + '</span> <span class="rel-kind">· ' + escapeHtml(a.note) + '</span></div>'
+  ).join('');
+}
+
+function renderEntities(){
+  const container = $('entity-list');
+  container.innerHTML = '';
+  ENTITIES.forEach(entity => {
+    const st = entityState[entity.id] || { decision: 'pending' };
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (st.decision !== 'pending') card.classList.add('done', st.decision);
+
+    const mentionsHtml = entity.mentions.map(m =>
+      '<div class="mention">' + escapeHtml(m.text) + '<span class="source">' + escapeHtml(m.source) + '</span></div>'
+    ).join('');
+
+    const claimsHtml = entity.claims.map((c, idx) => {
+      const stKey = entity.id + ':' + idx;
+      const cs = (entityState[stKey] && entityState[stKey].certainty) || c.certainty;
+      const cls = 'claim ' + cs;
+      const certTag = '<span class="claim-tag ' +
+        (cs === 'established' ? 'est' : cs === 'reported' ? 'rep' : cs === 'implied' ? 'imp' : 'unc') +
+        '">' + cs + '</span>';
+      const srcTag = '<span class="claim-tag src">' + escapeHtml(c.source) + '</span>';
+      const revTag = c.reveal != null
+        ? '<span class="claim-tag rev">reveal Ch. ' + c.reveal + '</span>'
+        : '<span class="claim-tag norev">no reveal</span>';
+      const actions =
+        '<div class="claim-actions">' +
+          '<button class="' + (cs === 'established' ? 'active' : '') + '" onclick="setCertainty(\'' + entity.id + '\',' + idx + ',\'established\')">established</button>' +
+          '<button class="' + (cs === 'reported' ? 'active' : '') + '" onclick="setCertainty(\'' + entity.id + '\',' + idx + ',\'reported\')">reported</button>' +
+          '<button class="' + (cs === 'implied' ? 'active' : '') + '" onclick="setCertainty(\'' + entity.id + '\',' + idx + ',\'implied\')">implied</button>' +
+          '<button class="' + (cs === 'uncertain' ? 'active' : '') + '" onclick="setCertainty(\'' + entity.id + '\',' + idx + ',\'uncertain\')">uncertain</button>' +
+          '<button class="' + (cs === 'invalid' ? 'active' : '') + '" onclick="setCertainty(\'' + entity.id + '\',' + idx + ',\'invalid\')">invalid</button>' +
+        '</div>';
+      return '<div class="' + cls + '">' +
+        '<div class="claim-statement">' + escapeHtml(c.text) + '</div>' +
+        '<div class="claim-meta">' + srcTag + certTag + revTag + '</div>' +
+        actions +
+      '</div>';
+    }).join('');
+
+    let openHtml = '';
+    if (entity.openQuestions && entity.openQuestions.length){
+      openHtml = '<div class="section">' +
+        '<div class="section-label">Open questions <span class="n">— author-only, never shown to readers</span></div>' +
+        entity.openQuestions.map(q => '<div class="rel">? <span class="rel-kind">' + escapeHtml(q.text) + '</span> <span class="rel-kind">· ' + escapeHtml(q.status) + '</span></div>').join('') +
+      '</div>';
+    }
+
+    let plannedHtml = '';
+    if (entity.plannedReveals && entity.plannedReveals.length){
+      plannedHtml = '<div class="section">' +
+        '<div class="section-label">Planned reveals <span class="n">— future scenes, not yet written</span></div>' +
+        entity.plannedReveals.map(p => '<div class="rel">→ <span class="rel-to">' + escapeHtml(p.description) + '</span> <span class="rel-kind">· planned Ch. ' + p.chapter + '</span></div>').join('') +
+      '</div>';
+    }
+
+    let subHtml = '';
+    if (entity.subEntities && entity.subEntities.length){
+      subHtml = '<div class="section">' +
+        '<div class="section-label">Sub-entities</div>' +
+        entity.subEntities.map(s => '<div class="rel">▸ <span class="rel-to">' + escapeHtml(s.name) + '</span> <span class="rel-kind">· ' + escapeHtml(s.type) + ' · ' + escapeHtml(s.note) + '</span></div>').join('') +
+      '</div>';
+    }
+
+    let disambigHtml = '';
+    if (entity.disambiguation){
+      disambigHtml = '<div class="section">' +
+        '<div class="section-label">Disambiguation</div>' +
+        '<div class="rel">' + escapeHtml(entity.disambiguation) + '</div>' +
+      '</div>';
+    }
+
+    let aliasHtml = '';
+    if (entity.aliases && entity.aliases.length){
+      aliasHtml += '<div class="section">' +
+        '<div class="section-label">Confirmed aliases</div>' +
+        renderAliases(entity.aliases) +
+      '</div>';
+    }
+    if (entity.possibleAliases && entity.possibleAliases.length){
+      aliasHtml += '<div class="section">' +
+        '<div class="section-label">Possible aliases <span class="n">— unresolved</span></div>' +
+        renderPossibleAliases(entity.possibleAliases) +
+      '</div>';
+    }
+
+    const disabled = st.decision !== 'pending' ? 'disabled' : '';
+    const actionsHtml =
+      '<div class="card-actions">' +
+        '<button class="btn primary" ' + disabled + ' onclick="decide(\'' + entity.id + '\',\'accepted\')">Accept as shown</button>' +
+        '<button class="btn" ' + disabled + ' onclick="decide(\'' + entity.id + '\',\'draft\')">Mark draft</button>' +
+        '<button class="btn muted" ' + disabled + ' onclick="decide(\'' + entity.id + '\',\'dismissed\')">Dismiss</button>' +
+      '</div>';
+
+    card.innerHTML =
+      '<div class="card-head">' +
+        '<div class="card-name">' + entity.icon + ' ' + escapeHtml(entity.name) + '</div>' +
+        '<div class="card-meta">' + escapeHtml(entity.type) + ' · ' + entity.mentions.length + ' mention' + (entity.mentions.length > 1 ? 's' : '') + '</div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="section"><div class="section-label">Mentions</div>' + mentionsHtml + '</div>' +
+        (claimsHtml ? '<div class="section"><div class="section-label">Claims <span class="n">— what the text establishes</span></div>' + claimsHtml + '</div>' : '') +
+        openHtml + plannedHtml + subHtml + disambigHtml + aliasHtml +
+      '</div>' +
+      actionsHtml;
+
+    container.appendChild(card);
+  });
+}
+
+function decide(entityId, decision){
+  const e = ENTITIES.find(x => x.id === entityId);
+  pushUndo((decision === 'accepted' ? 'Accepted ' : decision === 'draft' ? 'Marked draft ' : 'Dismissed ') + e.name);
+  entityState[entityId] = { decision };
+  renderAll(); saveState();
+}
+
+function setCertainty(entityId, idx, certainty){
+  const e = ENTITIES.find(x => x.id === entityId);
+  pushUndo('Changed certainty in ' + e.name);
+  const k = entityId + ':' + idx;
+  entityState[k] = entityState[k] || {};
+  entityState[k].certainty = certainty;
+  renderAll(); saveState();
+}
+
+function updateProgress(){
+  const total = ENTITIES.length;
+  const done = ENTITIES.filter(e => entityState[e.id] && entityState[e.id].decision).length;
+  $('progress').textContent = done + ' / ' + total;
+  $('finish-panel').classList.toggle('visible', done === total);
+}
+
+function updateUndoBar(){
+  const bar = $('undo-bar'), text = $('undo-bar-text');
+  if (stack.length === 0){ bar.classList.remove('visible'); return; }
+  const last = stack[stack.length-1];
+  text.innerHTML = 'Last: <strong>' + escapeHtml(last.label) + '</strong>';
+  bar.classList.add('visible');
+}
+
+function visibleClaimsFor(entity){
+  const out = [];
+  entity.claims.forEach((c, idx) => {
+    const stKey = entity.id + ':' + idx;
+    const cs = (entityState[stKey] && entityState[stKey].certainty) || c.certainty;
+    if (cs === 'invalid') return;
+    if (cs === 'implied' || cs === 'uncertain') return;
+    if (c.canonStatus !== 'canon') return;
+    if (c.reveal != null && c.reveal > previewChapter) return;
+    out.push({ text: c.text, certainty: cs, source: c.source });
+  });
+  return out;
+}
+
+function showReaderPreview(){
+  $('review-view').style.display = 'none';
+  $('reader-view').classList.add('visible');
+  setPreviewChapter(41);
+}
+function backToReview(){
+  $('reader-view').classList.remove('visible');
+  $('review-view').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function setPreviewChapter(ch){
+  previewChapter = ch;
+  [41,55,58].forEach(n => {
+    const btn = $('ch-' + n + '-btn');
+    if (btn) btn.classList.toggle('active', n === ch);
+  });
+  $('reader-subtitle').textContent = 'Reader at Chapter ' + ch;
+  $('reader-title').textContent = CHAPTER.title;
+  renderPreview();
+}
+
+function renderPreview(){
+  const body = $('reader-body');
+  body.innerHTML = '';
+
+  const visible = ENTITIES.filter(e => {
+    const st = entityState[e.id];
+    return st && st.decision === 'accepted';
+  });
+
+  const matchList = [];
+  visible.forEach(e => {
+    const forms = [e.name].concat(e.aliases || []);
+    forms.forEach(form => { if (form) matchList.push({ form, entity: e }); });
+  });
+  matchList.sort((a,b) => b.form.length - a.form.length);
+
+  const combined = matchList.length
+    ? new RegExp('\\b(' + matchList.map(m => escapeRegex(m.form)).join('|') + ')\\b', 'gi')
+    : null;
+
+  CHAPTER.paragraphs.forEach(par => {
+    let html = escapeHtml(par);
+    if (combined){
+      html = html.replace(combined, (matched) => {
+        const hit = matchList.find(x => x.form.toLowerCase() === matched.toLowerCase());
+        if (!hit) return matched;
+        return '<span class="entity-link" onclick="openReaderCard(\'' + hit.entity.id + '\')">' + matched + '</span>';
+      });
+    }
+    const p = document.createElement('p');
+    p.innerHTML = html;
+    body.appendChild(p);
+  });
+
+  const names = visible.map(e => e.name);
+  $('reader-note').innerHTML =
+    '<span class="diag-label">Preview diagnostics</span><br>' +
+    '<strong>Reader can tap:</strong> ' + (names.length ? names.join(', ') : 'none') + '<br>' +
+    '<strong>Projection rule:</strong> show claims where canonStatus = canon, certainty is established or reported, and reveal (if set) is past. Hide open questions and planned reveals entirely.';
+}
+
+function openReaderCard(id){
+  const e = ENTITIES.find(x => x.id === id);
+  if (!e) return;
+  $('rc-icon').textContent = e.icon;
+  $('rc-name').textContent = e.name;
+  $('rc-type').textContent = e.type;
+
+  const claims = visibleClaimsFor(e);
+  const content = $('rc-content');
+  if (claims.length === 0){
+    content.innerHTML = '<div class="rc-holding">Not yet discovered.</div>';
+  } else {
+    content.innerHTML =
+      '<div class="rc-section-label">What you know at Chapter ' + previewChapter + '</div>' +
+      '<ul class="rc-knows">' + claims.map(c => '<li>' + escapeHtml(c.text) + '</li>').join('') + '</ul>';
+  }
+  $('rc-meta').textContent = 'Reader at Chapter ' + previewChapter;
+  $('reader-card-backdrop').classList.add('visible');
+}
+function closeReaderCard(){ $('reader-card-backdrop').classList.remove('visible'); }
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReaderCard(); });
+document.addEventListener('DOMContentLoaded', () => {
+  const bd = $('reader-card-backdrop');
+  bd.addEventListener('click', e => { if (e.target.id === 'reader-card-backdrop') closeReaderCard(); });
+});
+
+renderAll();
+
+try {
+  const saved = JSON.parse(localStorage.getItem('review_v98') || 'null');
+  if (saved && saved.entityState){
+    entityState = saved.entityState;
+    renderAll();
+  }
+} catch(e){}
+
+setInterval(saveState, 10000);
+window.addEventListener('beforeunload', saveState);
+
+window.__reviewV98 = { get entityState(){ return entityState; }, VERSION };
+console.log('Review v9.8 ready.');
+</script>
+
+</body>
+</html>
